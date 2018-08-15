@@ -9,19 +9,27 @@
 
 Vue.js binding for Google Firebase Cloud Firestore.
 
-#### Supports
-- Collections / Queries (stored as array or map)
-- Documents
-- Real-time or Fetch Once
-- Sub-collections (with cascading deletions!)
+#### Features
+- Documents [example](#documents)
+- Collections (stored as array or map) [example](#collections)
+- Queries (stored as array or map) [example](#queries)
+- Real-time or once [example](#real-time-or-once)
 - Data or Computed properties
+- Overwriting, updating, removing
+- Sub-collections (with cascading deletions!)
 - Return instances of a class
 - Adding active record methods (set, update, remove)
 - Control over what properties are sent on save
 - Adding the ID of the document to the document
 - Callbacks (error, success, missing, remove)
+- Custom binding / unbinding
 
-### Prerequisites
+**Contents**
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+- [Usage](#usage)
+
+### Dependencies
 
 - Firebase ^5.0.0
 - Vue: ^1.0.28
@@ -96,10 +104,74 @@ what firestore database the document is stored, and in what collection.
 ]
 ```
 
-### Adding
-### Updating
-### Removing
-### Active Record
+### Documents
+
+```javascript
+const db = firebaseApp.firestore();
+new Vue({
+  inject: ['currentUserId'],
+  data() (
+    const $fiery = this.$fiery
+    return {
+      currentUser: $fiery(db.collection('users').doc(this.currentUserId)) // not reactive, but is updated real-time
+    }
+  }
+})
+```
+
+### Collections
+
+```javascript
+const db = firebaseApp.firestore();
+new Vue({
+  data() (
+    const $fiery = this.$fiery
+    return {
+      cars: $fiery(db.collection('cars')) // real-time array
+      carMap: $fiery(db.collection('cars'), {map: true}) // real-time map: carMap[id] = car
+    }
+  }
+})
+```
+
+### Queries
+
+```javascript
+const db = firebaseApp.firestore();
+new Vue({
+  inject: ['currentUserId'],
+  data() (
+    const $fiery = this.$fiery
+    return {
+      currentCars: $fiery(db.collection('cars'), { // real-time array
+        query: (cars) => cars.where('created_by', '==', this.currentUserId)
+      }) 
+      currentCarMap: $fiery(db.collection('cars'), { // real-time map: currentCarMap[id] = car
+        query: (cars) => cars.where('created_by', '==', this.currentUserId),
+        map: true
+      }) 
+    }
+  }
+})
+```
+
+### Real-time or once
+
+```javascript
+const db = firebaseApp.firestore();
+new Vue({
+  inject: ['currentUserId'],
+  data() (
+    const $fiery = this.$fiery
+    return {
+      // real-time is default, all you need to do is specify once: true to disable it
+      cars: $fiery(db.collection('cars'), {once: true}), // array populated once
+      currentUser: $fiery(db.collection('users').doc(this.currentUserId), {once: true}), // current user populated once
+    }
+  }
+})
+```
+
 
 ## LICENSE
 [MIT](https://opensource.org/licenses/MIT)

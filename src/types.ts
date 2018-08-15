@@ -74,6 +74,7 @@ export interface FieryOptions
     update?: string
     remove?: string
     ref?: string
+    clear?: string
     [unspecified: string]: any
   }
 
@@ -82,6 +83,7 @@ export interface FieryOptions
     update (fields?: string[]): any
     remove (excludeSubs: boolean): any
     ref (sub?: string): any
+    clear (props: string | string[]): any
   }
 
   propValue: string
@@ -161,6 +163,8 @@ export interface FieryInstance
   sync: (data: FieryData, fields?: string[]) => Promise<void> | undefined
 
   remove: (data: FieryData) => Promise<void> | undefined
+
+  clear: (data: FieryData, props: string | string[]) => Promise<void> | undefined
 
   ref: (data: FieryData) => FierySource | undefined
 

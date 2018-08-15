@@ -8,5 +8,6 @@ export const RECORD_OPTIONS = {
   sync: '$sync',
   update: '$update',
   remove: '$remove',
-  ref: '$ref'
+  ref: '$ref',
+  clear: '$clear'
 }

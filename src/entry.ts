@@ -1,11 +1,11 @@
 
 
 import { isCollectionSource } from './util'
-import { normalizeOptions } from './options'
+import { getOptions } from './options'
 import { FieryOptions, FieryInstance, FieryTarget, FieryEntry, FierySources, FieryVue, FierySource } from './types'
 
 
-export function closeEntry(entry: FieryEntry): void
+export function closeEntry (entry: FieryEntry): void
 {
   if (entry && entry.off)
   {
@@ -15,16 +15,18 @@ export function closeEntry(entry: FieryEntry): void
   }
 }
 
-export function getEntry(vm: FieryVue, source: FierySource, optionsInput?: Partial<FieryOptions>, entryKeyInput?: string, useRawOptions: boolean = false)
+export function getEntry (vm: FieryVue, source: FierySource, optionsInput?: Partial<FieryOptions>, entryKeyInput?: string, useRawOptions: boolean = false)
 {
   const options: FieryOptions = useRawOptions
     ? optionsInput as FieryOptions
-    : normalizeOptions(vm, optionsInput, source)
+    : getOptions(vm, optionsInput, source)
+  const target: FieryTarget = isCollectionSource(source)
+    ? options.newCollection()
+    : options.newDocument()
   const property: string | undefined = options.property
   const entryKey: string = entryKeyInput || property || ''
   const fiery: FieryInstance = vm.$fiery
   const fires: FierySources = vm.$fires
-  const target: FieryTarget = isCollectionSource(source) ? options.newCollection() : options.newDocument()
 
   let existing: FieryEntry | undefined = fiery.entry[ entryKey ]
   let children = {}

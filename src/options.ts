@@ -8,7 +8,7 @@ import * as operations from './operations'
 
 
 
-export function normalizeOptions(vm: FieryVue, options?: Partial<FieryOptions>, source?: FierySource): FieryOptions
+export function getOptions (vm: FieryVue, options?: Partial<FieryOptions>, source?: FierySource): FieryOptions
 {
   if (!options || !isObject(options))
   {
@@ -64,6 +64,9 @@ export function normalizeOptions(vm: FieryVue, options?: Partial<FieryOptions>, 
       },
       ref: function(this: FieryData, sub?: string) {
         return operations.ref.call(vm, this, sub)
+      },
+      clear: function(this: FieryData, props: string | string[]) {
+        return operations.clear.call(vm, this, props)
       }
     }
   }
@@ -121,7 +124,7 @@ export function normalizeOptions(vm: FieryVue, options?: Partial<FieryOptions>, 
   {
     for (let subProp in options.sub)
     {
-      let subOptions = normalizeOptions(vm, options.sub[subProp] as Partial<FieryOptions>)
+      let subOptions = getOptions(vm, options.sub[subProp] as Partial<FieryOptions>)
 
       subOptions.property = subProp
       subOptions.parent = options as FieryOptions

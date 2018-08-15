@@ -3,7 +3,8 @@ import { FieryVue, FieryOptions, FieryEntry, FieryData, FierySource } from './ty
 import { getMetadata, forEach } from './util'
 
 
-export function update(this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
+
+export function update (this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
 
@@ -15,7 +16,7 @@ export function update(this: FieryVue, data: FieryData, fields?: string[]): Prom
   }
 }
 
-export function sync(this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
+export function sync (this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
 
@@ -27,7 +28,7 @@ export function sync(this: FieryVue, data: FieryData, fields?: string[]): Promis
   }
 }
 
-export function remove(this: FieryVue, data: FieryData, excludeSubs: boolean = false): Promise<void> | undefined
+export function remove (this: FieryVue, data: FieryData, excludeSubs: boolean = false): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
 
@@ -48,7 +49,46 @@ export function remove(this: FieryVue, data: FieryData, excludeSubs: boolean = f
   }
 }
 
-export function ref(this: FieryVue, data: FieryData, sub?: string): FierySource | undefined
+export function clear (this: FieryVue, data: FieryData, props: string | string[]): Promise<void> | undefined
+{
+  const { store, path, options } = getMetadata(this, data)
+  const propsArray: string[] = props instanceof Array ? props : [props]
+
+  if (store && path)
+  {
+    const doc = store.doc(path)
+    const deleting: any = {}
+    let deleteCount: number = 0
+
+    for (let prop of propsArray)
+    {
+      if (options.sub && prop in options.sub && data[prop])
+      {
+        forEach(data[prop], (sub) =>
+        {
+          this.remove(sub as FieryData)
+        })
+      }
+      else if (prop in data)
+      {
+        let firebaseRuntime: any = (<any>store.app).firebase_
+
+        if (firebaseRuntime)
+        {
+          deleting[prop] = firebaseRuntime.firestore.FieldValue.delete()
+          deleteCount++
+        }
+      }
+    }
+
+    if (deleteCount > 0)
+    {
+      return doc.update(deleting)
+    }
+  }
+}
+
+export function ref (this: FieryVue, data: FieryData, sub?: string): FierySource | undefined
 {
   const { store, path } = getMetadata(this, data)
 
@@ -60,7 +100,7 @@ export function ref(this: FieryVue, data: FieryData, sub?: string): FierySource 
   }
 }
 
-export function getValues(data: FieryData, options: FieryOptions, fields?: string[]): FieryData
+export function getValues (data: FieryData, options: FieryOptions, fields?: string[]): FieryData
 {
   const explicit: string[] = fields || options.include
   const values: FieryData = {}

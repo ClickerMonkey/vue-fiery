@@ -8,7 +8,7 @@ import { factoryInstance } from './factory'
 
 
 
-export function init(this: FieryVue): void
+export function init (this: FieryVue): void
 {
   this.$fiery = factoryInstance(this) as FieryInstance
   this.$fiery.stores = {}
@@ -21,6 +21,7 @@ export function init(this: FieryVue): void
   this.$fiery.update = operations.update.bind(this)
   this.$fiery.sync = operations.sync.bind(this)
   this.$fiery.remove = operations.remove.bind(this)
+  this.$fiery.clear = operations.clear.bind(this)
   this.$fiery.ref = operations.ref.bind(this)
   this.$fiery.link = link.bind(this)
   this.$fiery.destroy = destroy.bind(this)
@@ -28,7 +29,7 @@ export function init(this: FieryVue): void
   this.$fires = {}
 }
 
-export function destroy(this: FieryVue): void
+export function destroy (this: FieryVue): void
 {
   this.$fiery.stores = {}
   this.$fiery.entry = {}
@@ -38,7 +39,7 @@ export function destroy(this: FieryVue): void
   this.$fires = {}
 }
 
-export function link(this: FieryVue): void
+export function link (this: FieryVue): void
 {
   const entryList: (FieryEntry | null)[] = this.$fiery.entryList
 

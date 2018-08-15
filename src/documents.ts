@@ -16,7 +16,7 @@ type Firestore = firebase.firestore.Firestore
 
 
 
-export function parseDocument(doc: DocumentSnapshot, options: FieryOptions): FieryData
+export function parseDocument (doc: DocumentSnapshot, options: FieryOptions): FieryData
 {
   let value = doc.data()
   let out = (isObject(value) ? value : { [options.propValue]: value }) as FieryData
@@ -29,7 +29,7 @@ export function parseDocument(doc: DocumentSnapshot, options: FieryOptions): Fie
   return out
 }
 
-export function refreshDocument(vm: FieryVue, entry: FieryEntry, doc: DocumentSnapshot, data?: FieryData): FieryData
+export function refreshDocument (vm: FieryVue, entry: FieryEntry, doc: DocumentSnapshot, data?: FieryData): FieryData
 {
   const options: FieryOptions = entry.options
   const property: string | undefined = options.property
@@ -86,7 +86,7 @@ export function refreshDocument(vm: FieryVue, entry: FieryEntry, doc: DocumentSn
   return data
 }
 
-export function copyData(vm: FieryVue, data: FieryData, update: FieryData): FieryData
+export function copyData (vm: FieryVue, data: FieryData, update: FieryData): FieryData
 {
   for (let prop in update)
   {
@@ -96,7 +96,7 @@ export function copyData(vm: FieryVue, data: FieryData, update: FieryData): Fier
   return data
 }
 
-export function destroyDocuments(vm: FieryVue, map: FieryMap, fromObject?: FieryMap): void
+export function destroyDocuments (vm: FieryVue, map: FieryMap, fromObject?: FieryMap): void
 {
   for (let id in map)
   {
@@ -111,7 +111,7 @@ export function destroyDocuments(vm: FieryVue, map: FieryMap, fromObject?: Fiery
   }
 }
 
-export function destroyDocument(vm: FieryVue, data: FieryData): void
+export function destroyDocument (vm: FieryVue, data: FieryData): void
 {
   let { path, options } = getMetadata(vm, data)
 
@@ -146,7 +146,7 @@ export function destroyDocument(vm: FieryVue, data: FieryData): void
   }
 }
 
-export function getDocumentIdentifier(vm: FieryVue, options: FieryOptions, doc: DocumentSnapshot)
+export function getDocumentIdentifier (vm: FieryVue, options: FieryOptions, doc: DocumentSnapshot)
 {
   return getStoreKey(vm, doc) +
     UID_SEPARATOR +
@@ -155,7 +155,7 @@ export function getDocumentIdentifier(vm: FieryVue, options: FieryOptions, doc: 
     doc.ref.path
 }
 
-export function getStoreKey(vm: FieryVue, doc: DocumentSnapshot): number
+export function getStoreKey (vm: FieryVue, doc: DocumentSnapshot): number
 {
   const firestore = (<any>doc)._firestore
   const db = firestore._databaseId

@@ -3,7 +3,7 @@ import { init, link, destroy } from './mixin'
 
 
 
-export function install(Vue: any)
+export function install (Vue: any)
 {
   Vue.mixin({
     beforeCreate: init,

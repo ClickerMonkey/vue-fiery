@@ -25,12 +25,12 @@ export function isArray (x?: any): boolean
   return x && x instanceof Array
 }
 
-export function isCollectionSource(source: FierySource): boolean
+export function isCollectionSource (source: FierySource): boolean
 {
   return !!((<any>source).where)
 }
 
-export function forEach(iterable: any, callback: (item: any, key?: number | string, iterable?: any) => any): boolean
+export function forEach (iterable: any, callback: (item: any, key?: number | string, iterable?: any) => any): boolean
 {
   if (isArray(iterable))
   {
@@ -54,7 +54,7 @@ export function forEach(iterable: any, callback: (item: any, key?: number | stri
   return false
 }
 
-export function getMetadata(vm: FieryVue, data: FieryData): FieryMetadata
+export function getMetadata (vm: FieryVue, data: FieryData): FieryMetadata
 {
   const uid: string = data[PROP_UID]
   const [storeKey, optionKey, path] = uid.split(UID_SEPARATOR) as string[]
@@ -64,7 +64,7 @@ export function getMetadata(vm: FieryVue, data: FieryData): FieryMetadata
   return { uid, path, storeKey, store, optionKey, options }
 }
 
-export function createRecord(data: FieryData, options: FieryOptions): FieryData
+export function createRecord (data: FieryData, options: FieryOptions): FieryData
 {
   if (options.record)
   {
@@ -74,6 +74,7 @@ export function createRecord(data: FieryData, options: FieryOptions): FieryData
     if (recordOptions.sync) data[recordOptions.sync] = recordFunctions.sync
     if (recordOptions.update) data[recordOptions.update] = recordFunctions.update
     if (recordOptions.remove) data[recordOptions.remove] = recordFunctions.remove
+    if (recordOptions.clear) data[recordOptions.clear] = recordFunctions.clear
     if (recordOptions.ref) data[recordOptions.ref] = recordFunctions.ref
   }
 

@@ -41,7 +41,7 @@ export function factory (vm: FieryVue, entry: FieryEntry): FieryData
   return entry.target as FieryData
 }
 
-export function handleDocumentUpdate(vm: FieryVue, entry: FieryEntry, doc: DocumentSnapshot): void
+export function handleDocumentUpdate (vm: FieryVue, entry: FieryEntry, doc: DocumentSnapshot): void
 {
   const options: FieryOptions = entry.options
 

@@ -5,7 +5,7 @@
 <img src="https://travis-ci.org/ClickerMonkey/vue-fiery.svg?branch=master">
 </p>
 
-## vue-firey
+## vue-fiery
 
 Vue.js binding for Google Firebase Cloud Firestore.
 

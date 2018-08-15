@@ -9,57 +9,30 @@
 
 Vue.js binding for Google Firebase Cloud Firestore.
 
+#### Supports
+- Collections / Queries (stored as array or map)
+- Documents
+- Real-time or Fetch Once
+- Sub-collections (with cascading deletions!)
+- Data or Computed properties
+- Return instances of a class
+- Adding active record methods (set, update, remove)
+- Control over what properties are sent on save
+- Adding the ID of the document to the document
+- Callbacks (error, success, missing, remove)
+
 ### Prerequisites
 
-Firebase ^5.0.0
-
-### Try it out: Demo
+- Firebase ^5.0.0
+- Vue: ^1.0.28
 
 ### Installation
-
-#### Globally (Browser)
-
-vue-fiery will be installed automatically.
-
-```html
-<!-- Vue -->   
-<script src="https://unpkg.com/vue"></script>
-<!-- Firebase -->   
-<script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
-<!-- Firestore -->   
-<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-firestore.js"></script>
-<!-- vue-fiery -->   
-<script src="https://unpkg.com/vue-fiery"></script>
-
-<script>        
-  // Firebase config.
-  var config = {
-    apiKey: "your-apik-ey",
-    authDomain: "your-auth-domain",
-    databaseURL: "your-database-url",
-    projectId: "your-project-id",
-    storageBucket: "your-storage-bucket",
-    messagingSenderId: "your-messaing-sender-id"
-  }
-
-  // Initialize Firebase.
-  firebase.initializeApp(config);
-</script>
-```
 
 #### npm
 
 Installation via npm : `npm install vue-fiery --save`
 
 ### Usage
-
-vue-fiery supports collections (as an array or map), docs, queries, real-time or
-fetch once, subcollections, can be stored in data or as a computed property,
-return instances of a class, adding active record methods (set, update, remove),
-control over what properties are sent on save, deleting sub collections, easy
-access for the ID of a document, and callbacks (error, success, missing, remove).
-
-1. using `firestore` option.
 
 ```javascript
 import Vue from 'vue'
@@ -77,13 +50,41 @@ var vm = new Vue({
   el: '#app',
   data() {
     return {
-      todos: this.$fiery(db.collection('todos')) // live collection
+      todos: this.$fiery(db.collection('todos')) // live collection,
+      ford: this.$fiery(db.collection('cars').doc('ford')) // live document
+
+      // complex collection example
+      persons: this.$fiery(db.collection('persons'), {
+        once: true,
+        key: 'id', // store the document IDs in the object.id field
+        type: Person, // use this constructor to make them all instances of Person
+        record: true, // add $set, $update, $remove and $ref to Person
+        sub: {
+          contacts: {
+            once: false, // but the contacts can be live! live is the default
+            record: true, // we can add these functions to the plain objects
+          }
+        }
+      }),
+
+      // used below
+      role: 'admin'
+    }
+  },
+  computed: {
+    // Updated when role changes
+    personsWithRole() {
+      return this.$fiery(db.collection('persons'), {
+        query: (q) => q.where('role', '==', this.role),
+        type: Person
+      })
     }
   }
 })
 ```
 
-Each record of the array will contain a `.uid` property....
+Each record of the array will contain a `.uid` property. This helps identify
+what firestore database the document is stored, and in what collection.
 
 ```json
 [

@@ -59,23 +59,7 @@ var vm = new Vue({
   data() {
     return {
       todos: this.$fiery(db.collection('todos')) // live collection,
-      ford: this.$fiery(db.collection('cars').doc('ford')) // live document
-
-      // complex collection example
-      persons: this.$fiery(db.collection('persons'), {
-        once: true,
-        key: 'id', // store the document IDs in the object.id field
-        type: Person, // use this constructor to make them all instances of Person
-        record: true, // add $set, $update, $remove and $ref to Person
-        sub: {
-          contacts: {
-            once: false, // but the contacts can be live! live is the default
-            record: true, // we can add these functions to the plain objects
-          }
-        }
-      }),
-
-      // used below
+      ford: this.$fiery(db.collection('cars').doc('ford')), // live document
       role: 'admin'
     }
   },
@@ -92,7 +76,7 @@ var vm = new Vue({
 ```
 
 Each record of the array will contain a `.uid` property. This helps identify
-what firestore database the document is stored, and in what collection.
+what firestore database the document is stored, in what collection, and with which options
 
 ```json
 [

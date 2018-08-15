@@ -17,7 +17,7 @@ Vue.js binding for Google Firebase Cloud Firestore.
 - Data or computed properties [example](#data-or-computed)
 - Adding, updating, overwriting, removing [example](#adding-updating-overwriting-removing)
 - Sub-collections (with cascading deletions!) [example](#sub-collections)
-- Return instances of a class [example](#return-instances-of-class)
+- Return instances of a class [example](#return-instances-of-a-class)
 - Add active record methods (set, update, remove) [example](#active-record)
 - Control over what properties are sent on save [example](#save-fields)
 - Adding the key to the document [example](#adding-key-to-object)

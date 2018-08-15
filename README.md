@@ -18,7 +18,7 @@ Vue.js binding for Google Firebase Cloud Firestore.
 - Adding, updating, sync, removing, remove field [example](#adding-updating-overwriting-removing)
 - Sub-collections (with cascading deletions!) [example](#sub-collections)
 - Return instances of a class [example](#return-instances-of-a-class)
-- Add active record methods (set, update, remove) [example](#active-record)
+- Add active record methods (sync, update, remove, clear, getChanges) [example](#active-record)
 - Control over what properties are sent on save [example](#save-fields)
 - Encode & decode properties [example](#encode-decode-properties)
 - Adding the key to the document [example](#adding-key-to-object)
@@ -324,17 +324,17 @@ new Vue({
   data() {
     return {
       todos: this.$fiery(db.collection('todos'), {
-        type: Todo, record: true
+        type: Todo,
+        record: true
         // $sync, $update, $remove, $ref, $clear, $getChanges are functions added to every Todo instance
       }),
       todosCustom: this.$fiery(db.collection('todos'), {
         record: true,
         recordOptions: { // which methods do you want added to every object, and with what method names?
-          set: 'set',
+          sync: 'sync',
           update: 'save',
-          remove: 'destory',
-          ref: 'ref'
-          // we don't want $clear or $getChanges
+          remove: 'destroy'
+          // we don't want $ref, $clear, or $getChanges
         }
       })
     }
@@ -368,8 +368,8 @@ new Vue({
   data() {
     return {
       todos: this.$fiery(db.collection('todos'), {
-        include: ['name', 'done'], // if specified, we ONLY send these fields on set/update
-        exclude: ['hidden'] // if specified here, will not be sent on set/update
+        include: ['name', 'done'], // if specified, we ONLY send these fields on sync/update
+        exclude: ['hidden'] // if specified here, will not be sent on sync/update
       }),
     }
   },

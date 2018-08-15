@@ -167,7 +167,7 @@ new Vue({
   data() {
     // data examples above
     return {
-      limit: true,
+      limit: 25,
       status: 'unfinished'
     }
   },

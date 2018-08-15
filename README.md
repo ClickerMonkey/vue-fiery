@@ -15,11 +15,12 @@ Vue.js binding for Google Firebase Cloud Firestore.
 - Queries (stored as array or map) [example](#queries)
 - Real-time or once [example](#real-time-or-once)
 - Data or computed properties [example](#data-or-computed)
-- Adding, updating, overwriting, removing [example](#adding-updating-overwriting-removing)
+- Adding, updating, sync, removing, remove field [example](#adding-updating-overwriting-removing)
 - Sub-collections (with cascading deletions!) [example](#sub-collections)
 - Return instances of a class [example](#return-instances-of-a-class)
 - Add active record methods (set, update, remove) [example](#active-record)
 - Control over what properties are sent on save [example](#save-fields)
+- Encode & decode properties [example](#encode-decode-properties)
 - Adding the key to the document [example](#adding-key-to-object)
 - Callbacks (error, success, missing, remove) [example](#callbacks)
 - Custom binding / unbinding
@@ -130,11 +131,11 @@ new Vue({
     return {
       currentCars: $fiery(db.collection('cars'), { // real-time array
         query: (cars) => cars.where('created_by', '==', this.currentUserId)
-      }) 
+      })
       currentCarMap: $fiery(db.collection('cars'), { // real-time map: currentCarMap[id] = car
         query: (cars) => cars.where('created_by', '==', this.currentUserId),
         map: true
-      }) 
+      })
     }
   }
 })
@@ -180,7 +181,7 @@ new Vue({
           .where('created_by', '==', this.currentUserId)
           .where('status', '==', this.status)
           .limit(this.limit),
-        
+
       })
     }
   }
@@ -220,12 +221,15 @@ new Vue({
     updateAny(data) { // any document can be passed, ex: this.todos[1], this.currentUser
       this.$fiery.update(data)
     },
-    overwrite(data) { // only fields present on data will exist on set
-      this.$fiery.set(data)
+    overwrite(data) { // only fields present on data will exist on sync
+      this.$fiery.sync(data)
     },
     remove(data) {
       this.$fiery.remove(data) // removes sub collections as well
       this.$fiery.remove(data, true) // preserves sub collections
+    },
+    removeName(todo) {
+      this.$fiery.clear(data, 'name') // can also specify an array of props or sub collections
     }
   }
 })
@@ -258,6 +262,9 @@ new Vue({
         name: 'Fork vue-fiery',
         done: false
       })
+    },
+    clearChildren(parent) {
+      this.$fiery.clear(parent, 'children') // clear the sub collection
     }
   }
 })
@@ -282,7 +289,15 @@ new Vue({
   data() {
     return {
       // this.todos[todoIndex] instanceof Todo
-      todos: this.$fiery(db.collection('todos'), { type: Todo })
+      todos: this.$fiery(db.collection('todos'), {
+        type: Todo,
+        // OR you can specify newDocument and do custom loading (good for polymorphic data)
+        newDocument: function(initialData) {
+          var instance = new Todo()
+          instance.callSomeMethod()
+          return instance
+        }
+      })
     }
   }
 })
@@ -308,17 +323,18 @@ const db = firebaseApp.firestore();
 new Vue({
   data() {
     return {
-      todos: this.$fiery(db.collection('todos'), { 
+      todos: this.$fiery(db.collection('todos'), {
         type: Todo, record: true
-        // $set, $update, $remove, $ref are functions added to every Todo instance
+        // $sync, $update, $remove, $ref, $clear, $getChanges are functions added to every Todo instance
       }),
       todosCustom: this.$fiery(db.collection('todos'), {
-        record: true, 
+        record: true,
         recordOptions: { // which methods do you want added to every object, and with what method names?
           set: 'set',
           update: 'save',
           remove: 'destory',
           ref: 'ref'
+          // we don't want $clear or $getChanges
         }
       })
     }
@@ -326,7 +342,7 @@ new Vue({
   methods: {
     updateTodoAt(index) {
       // instead of this.$fiery.update(this.todos[index])
-      this.todos[index].$update() 
+      this.todos[index].$update()
     },
     saveTodoCustomAt(index) {
       // instead of this.$fiery.update(this.todosCustom[index])
@@ -334,6 +350,11 @@ new Vue({
     },
     done(todo) {
       todo.markDone(this.currentUser) // assuming currentUser exists
+    },
+    getChanges(todo) {
+      todo.$getChanges(['name', 'done'], function(changes, saved, current) {
+        // are there unsaved changes in name or done? (exclude array to check entire document)
+      })
     }
   }
 })
@@ -346,7 +367,7 @@ const db = firebaseApp.firestore();
 new Vue({
   data() {
     return {
-      todos: this.$fiery(db.collection('todos'), { 
+      todos: this.$fiery(db.collection('todos'), {
         include: ['name', 'done'], // if specified, we ONLY send these fields on set/update
         exclude: ['hidden'] // if specified here, will not be sent on set/update
       }),
@@ -361,6 +382,37 @@ new Vue({
     },
     saveOverride(todo) {
       this.$fiery.update(todo, ['hidden']) // ignores exclude and include when specified
+    }
+  }
+})
+```
+
+### Encode & decode properties
+
+```javascript
+const db = firebaseApp.firestore();
+new Vue({
+  data() {
+    return {
+      todos: this.$fiery(db.collection('todos'), {
+        // convert server values to local values
+        decoders: {
+          status(remoteValue, remoteData) {
+            return remoteValue === 1 ? 'done' : (remoteValue === 2 ? 'started' : 'not started')
+          }
+        },
+        // convert local values to server values
+        encoders: {
+          status(localValue, localData) {
+            return localValue === 'done' ? 1 : (localeValue === 'started' ? 2 : 0)
+          }
+        },
+        // optionally instead of individual decoders you can specify a function
+        decode(remoteData) {
+          // do some decoding, maybe do something special
+          return remoteData
+        }
+      })
     }
   }
 })

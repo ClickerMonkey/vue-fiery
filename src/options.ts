@@ -53,8 +53,8 @@ export function normalizeOptions(vm: FieryVue, options?: Partial<FieryOptions>, 
   if (options.record)
   {
     options.recordFunctions = {
-      set: function(this: FieryData, fields?: string[]) {
-        return operations.set.call(vm, this, fields)
+      sync: function(this: FieryData, fields?: string[]) {
+        return operations.sync.call(vm, this, fields)
       },
       update: function(this: FieryData, fields?: string[]) {
         return operations.update.call(vm, this, fields)

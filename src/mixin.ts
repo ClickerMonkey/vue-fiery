@@ -19,7 +19,7 @@ export function init(this: FieryVue): void
   this.$fiery.entry = {}
   this.$fiery.entryList = []
   this.$fiery.update = operations.update.bind(this)
-  this.$fiery.set = operations.set.bind(this)
+  this.$fiery.sync = operations.sync.bind(this)
   this.$fiery.remove = operations.remove.bind(this)
   this.$fiery.ref = operations.ref.bind(this)
   this.$fiery.link = link.bind(this)

@@ -5,7 +5,7 @@ export const UID_SEPARATOR = '///'
 export const ENTRY_SEPARATOR = '/'
 export const STORE_SEPARATOR = '/'
 export const RECORD_OPTIONS = {
-  set: '$set',
+  sync: '$sync',
   update: '$update',
   remove: '$remove',
   ref: '$ref'

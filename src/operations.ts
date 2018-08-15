@@ -3,37 +3,6 @@ import { FieryVue, FieryOptions, FieryEntry, FieryData, FierySource } from './ty
 import { getMetadata, forEach } from './util'
 
 
-export function getValues(data: FieryData, options: FieryOptions, fields?: string[]): FieryData
-{
-  const explicit: string[] = fields || options.include
-  const values: FieryData = {}
-
-  if (explicit)
-  {
-    for (let i = 0; i < explicit.length; i++)
-    {
-      let prop: string = explicit[i]
-
-      if (prop in data)
-      {
-        values[prop] = data[prop]
-      }
-    }
-  }
-  else
-  {
-    for (let prop in data)
-    {
-      if (!(prop in options.exclude))
-      {
-        values[prop] = data[prop]
-      }
-    }
-  }
-
-  return values
-}
-
 export function update(this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
@@ -46,7 +15,7 @@ export function update(this: FieryVue, data: FieryData, fields?: string[]): Prom
   }
 }
 
-export function set(this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
+export function sync(this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
 
@@ -89,4 +58,35 @@ export function ref(this: FieryVue, data: FieryData, sub?: string): FierySource 
 
     return sub ? doc.collection(sub) : doc
   }
+}
+
+export function getValues(data: FieryData, options: FieryOptions, fields?: string[]): FieryData
+{
+  const explicit: string[] = fields || options.include
+  const values: FieryData = {}
+
+  if (explicit)
+  {
+    for (let i = 0; i < explicit.length; i++)
+    {
+      let prop: string = explicit[i]
+
+      if (prop in data)
+      {
+        values[prop] = data[prop]
+      }
+    }
+  }
+  else
+  {
+    for (let prop in data)
+    {
+      if (!(prop in options.exclude))
+      {
+        values[prop] = data[prop]
+      }
+    }
+  }
+
+  return values
 }

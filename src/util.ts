@@ -71,7 +71,7 @@ export function createRecord(data: FieryData, options: FieryOptions): FieryData
     let recordOptions = options.recordOptions
     let recordFunctions = options.recordFunctions
 
-    if (recordOptions.set) data[recordOptions.set] = recordFunctions.set
+    if (recordOptions.sync) data[recordOptions.sync] = recordFunctions.sync
     if (recordOptions.update) data[recordOptions.update] = recordFunctions.update
     if (recordOptions.remove) data[recordOptions.remove] = recordFunctions.remove
     if (recordOptions.ref) data[recordOptions.ref] = recordFunctions.ref

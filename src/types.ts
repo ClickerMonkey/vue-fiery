@@ -70,7 +70,7 @@ export interface FieryOptions
   record?: boolean
 
   recordOptions: {
-    set?: string
+    sync?: string
     update?: string
     remove?: string
     ref?: string
@@ -78,7 +78,7 @@ export interface FieryOptions
   }
 
   recordFunctions: {
-    set (fields?: string[]): any
+    sync (fields?: string[]): any
     update (fields?: string[]): any
     remove (excludeSubs: boolean): any
     ref (sub?: string): any
@@ -158,7 +158,7 @@ export interface FieryInstance
 
   update: (data: FieryData, fields?: string[]) => Promise<void> | undefined
 
-  set: (data: FieryData, fields?: string[]) => Promise<void> | undefined
+  sync: (data: FieryData, fields?: string[]) => Promise<void> | undefined
 
   remove: (data: FieryData) => Promise<void> | undefined
 

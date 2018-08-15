@@ -16,6 +16,26 @@ type Firestore = firebase.firestore.Firestore
 
 
 
+export function decodeDocument(encoded: FieryData, options: FieryOptions): FieryData
+{
+  if (options.decode)
+  {
+    encoded = options.decode(encoded)
+  }
+  else if (options.decoders)
+  {
+    for (let prop in options.decoders)
+    {
+      if (prop in encoded)
+      {
+        encoded[prop] = options.decoders[prop](encoded[prop], encoded)
+      }
+    }
+  }
+
+  return encoded
+}
+
 export function parseDocument (doc: DocumentSnapshot, options: FieryOptions): FieryData
 {
   let value = doc.data()
@@ -35,16 +55,16 @@ export function refreshDocument (vm: FieryVue, entry: FieryEntry, doc: DocumentS
   const property: string | undefined = options.property
   const replace: boolean = !!(options.reset && property)
   const encoded: FieryData = parseDocument(doc, options)
+  const decoded: FieryData = decodeDocument(encoded, options)
 
   if (!data)
   {
     const identifier: string = getDocumentIdentifier(vm, options, doc)
 
-    data = options.newDocument(encoded)
-
+    data = options.newDocument(decoded)
     data[PROP_UID] = identifier
 
-    copyData(vm, data, encoded)
+    copyData(vm, data, decoded)
     createRecord(data, options)
 
     if (options.sub)
@@ -61,7 +81,7 @@ export function refreshDocument (vm: FieryVue, entry: FieryEntry, doc: DocumentS
   }
   else if (replace)
   {
-    const replaced: FieryData = options.newDocument(encoded)
+    const replaced: FieryData = options.newDocument(decoded)
 
     if (options.sub)
     {
@@ -76,11 +96,11 @@ export function refreshDocument (vm: FieryVue, entry: FieryEntry, doc: DocumentS
 
     createRecord(replaced, options)
 
-    data = copyData(vm, replaced, encoded)
+    data = copyData(vm, replaced, decoded)
   }
   else
   {
-    copyData(vm, data, encoded)
+    copyData(vm, data, decoded)
   }
 
   return data

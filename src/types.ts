@@ -72,9 +72,22 @@ export interface FieryOptions
 
   newCollection: () => FieryMap | FieryData[]
 
+  decode?: (encoded: FieryData) => FieryData
+
+  decoders?:
+  {
+    [prop: string]: (a: any, encoded: FieryData) => any
+  },
+
+  encoders?:
+  {
+    [prop: string]: (a: any, data: FieryData) => any
+  },
+
   record?: boolean
 
-  recordOptions: {
+  recordOptions:
+  {
     sync?: string
     update?: string
     remove?: string
@@ -84,15 +97,16 @@ export interface FieryOptions
     [unspecified: string]: any
   }
 
-  recordFunctions: {
-    sync (fields?: string[]): any
-    update (fields?: string[]): any
-    remove (excludeSubs: boolean): any
-    ref (sub?: string): any
-    clear (props: string | string[]): any
-    getChanges (fieldsOrCallback: string[] | FieryChangesCallback,
+  recordFunctions:
+  {
+    sync: (fields?: string[]) => any
+    update: (fields?: string[]) => any
+    remove: (excludeSubs: boolean) => any
+    ref: (sub?: string) => any
+    clear: (props: string | string[]) => any
+    getChanges: (fieldsOrCallback: string[] | FieryChangesCallback,
       callbackOrEquality?: FieryChangesCallback | FieryEquality,
-      equalityOrNothing?: FieryEquality): any
+      equalityOrNothing?: FieryEquality) => any
   }
 
   propValue: string
@@ -115,7 +129,8 @@ export interface FieryOptions
 
   parent?: FieryOptions
 
-  sub?: {
+  sub?:
+  {
     [subProp: string]: FieryOptions
   }
 
@@ -149,17 +164,20 @@ export interface FieryInstance
 
   storeKeyNext: number
 
-  stores: {
+  stores:
+  {
     [storeKey: number]: Firestore
   }
 
-  storeIdToKey: {
+  storeIdToKey:
+  {
     [id: string]: number
   }
 
   optionKeyNext: number
 
-  options: {
+  options:
+  {
     [optionKey: number]: FieryOptions
   }
 

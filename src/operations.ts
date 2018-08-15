@@ -168,5 +168,16 @@ export function getValues (data: FieryData, options: FieryOptions, fields?: stri
     }
   }
 
+  if (options.encoders)
+  {
+    for (let prop in options.encoders)
+    {
+      if (prop in values)
+      {
+        values[prop] = options.encoders[prop](values[prop], data)
+      }
+    }
+  }
+
   return values
 }

@@ -74,6 +74,12 @@
               include: ['name', 'done', 'assigned'],
               type: Todo,
               record: true,
+              decoders: {
+                done: function(d) {return d ? 1 : 0}
+              },
+              encoders: {
+                done: function(d) {return d ? true : false}
+              },
               sub: {
                 children: {
                   type: Todo,

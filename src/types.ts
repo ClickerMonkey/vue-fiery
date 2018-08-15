@@ -166,6 +166,9 @@ export interface FieryInstance
 
   getMetadata: (data: FieryData) => FieryMetadata
 
+  link: () => void
+
+  destroy: () => void
 }
 
 export interface FieryMetadata

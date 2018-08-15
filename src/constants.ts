@@ -9,5 +9,6 @@ export const RECORD_OPTIONS = {
   update: '$update',
   remove: '$remove',
   ref: '$ref',
-  clear: '$clear'
+  clear: '$clear',
+  getChanges: '$getChanges'
 }

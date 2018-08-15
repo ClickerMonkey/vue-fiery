@@ -22,6 +22,7 @@ export function init (this: FieryVue): void
   this.$fiery.sync = operations.sync.bind(this)
   this.$fiery.remove = operations.remove.bind(this)
   this.$fiery.clear = operations.clear.bind(this)
+  this.$fiery.getChanges = operations.getChanges.bind(this)
   this.$fiery.ref = operations.ref.bind(this)
   this.$fiery.link = link.bind(this)
   this.$fiery.destroy = destroy.bind(this)

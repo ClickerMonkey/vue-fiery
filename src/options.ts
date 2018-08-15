@@ -2,7 +2,7 @@
 
 
 import { PROP_UID, PROP_VALUE, RECORD_OPTIONS } from './constants'
-import { FieryOptions, FieryInstance, FieryVue, FieryExclusions, FierySource, FieryData, FieryMap } from './types'
+import { FieryOptions, FieryInstance, FieryVue, FieryExclusions, FierySource, FieryData, FieryMap, FieryChangesCallback, FieryEquality } from './types'
 import { isObject, isFunction, isArray } from './util'
 import * as operations from './operations'
 
@@ -67,6 +67,12 @@ export function getOptions (vm: FieryVue, options?: Partial<FieryOptions>, sourc
       },
       clear: function(this: FieryData, props: string | string[]) {
         return operations.clear.call(vm, this, props)
+      },
+      getChanges: function(this: FieryData,
+        fieldsOrCallback: string[] | FieryChangesCallback,
+        callbackOrEquality?: FieryChangesCallback | FieryEquality,
+        equalityOrNothing?: FieryEquality) {
+        return operations.getChanges.call(vm, this, fieldsOrCallback, callbackOrEquality, equalityOrNothing)
       }
     }
   }

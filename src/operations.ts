@@ -1,6 +1,7 @@
 
-import { FieryVue, FieryOptions, FieryEntry, FieryData, FierySource } from './types'
-import { getMetadata, forEach } from './util'
+import { FieryVue, FieryOptions, FieryEntry, FieryData, FierySource, FieryChangesCallback, FieryEquality } from './types'
+import { parseDocument } from './documents'
+import { getMetadata, forEach, isEqual } from './util'
 
 
 
@@ -85,6 +86,45 @@ export function clear (this: FieryVue, data: FieryData, props: string | string[]
     {
       return doc.update(deleting)
     }
+  }
+}
+
+export function getChanges (this: FieryVue, data: FieryData,
+  fieldsOrCallback: string[] | FieryChangesCallback,
+  callbackOrEquality?: FieryChangesCallback | FieryEquality,
+  equalityOrNothing?: FieryEquality): Promise<void> | undefined
+{
+  const { store, path, options } = getMetadata(this, data)
+  const fields: string[] | undefined = typeof fieldsOrCallback === 'string' ? fieldsOrCallback as string[] : undefined
+  const callback: FieryChangesCallback = (fields ? callbackOrEquality : fieldsOrCallback) as FieryChangesCallback
+  const equality: FieryEquality = ((fields ? equalityOrNothing : callbackOrEquality) || isEqual) as FieryEquality
+
+  if (store && path)
+  {
+    const current: FieryData = getValues(data, options, fields)
+
+    return store.doc(path).get().then((doc) =>
+    {
+      const encoded: FieryData = parseDocument(doc, options)
+      const updated: FieryData = {}
+      const old: FieryData = {}
+      let changes = false
+
+      for (let prop in current)
+      {
+        let valueUpdated = encoded[prop]
+        let valueOld = current[prop]
+
+        if (!equality(valueOld, valueUpdated))
+        {
+          changes = true
+          updated[prop] = valueUpdated
+          old[prop] = valueOld
+        }
+      }
+
+      callback(changes, updated, old)
+    })
   }
 }
 

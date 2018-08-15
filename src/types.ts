@@ -32,6 +32,11 @@ export type FierySources = { [property: string]: FierySource }
 
 export type FieryEntryMap = { [key: string]: FieryEntry }
 
+export type FieryChangesCallback = (changes: boolean, updated: FieryData, old: FieryData) => any
+
+export type FieryEquality = (a: any, b: any) => boolean
+
+
 
 export interface FieryVue
 {
@@ -75,6 +80,7 @@ export interface FieryOptions
     remove?: string
     ref?: string
     clear?: string
+    getChanges?: string
     [unspecified: string]: any
   }
 
@@ -84,6 +90,9 @@ export interface FieryOptions
     remove (excludeSubs: boolean): any
     ref (sub?: string): any
     clear (props: string | string[]): any
+    getChanges (fieldsOrCallback: string[] | FieryChangesCallback,
+      callbackOrEquality?: FieryChangesCallback | FieryEquality,
+      equalityOrNothing?: FieryEquality): any
   }
 
   propValue: string
@@ -165,6 +174,11 @@ export interface FieryInstance
   remove: (data: FieryData) => Promise<void> | undefined
 
   clear: (data: FieryData, props: string | string[]) => Promise<void> | undefined
+
+  getChanges: (data: FieryData,
+    fieldsOrCallback: string[] | FieryChangesCallback,
+    callbackOrEquality?: FieryChangesCallback | FieryEquality,
+    equalityOrNothing?: FieryEquality) => Promise<void> | undefined
 
   ref: (data: FieryData) => FierySource | undefined
 

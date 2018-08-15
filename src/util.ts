@@ -75,8 +75,63 @@ export function createRecord (data: FieryData, options: FieryOptions): FieryData
     if (recordOptions.update) data[recordOptions.update] = recordFunctions.update
     if (recordOptions.remove) data[recordOptions.remove] = recordFunctions.remove
     if (recordOptions.clear) data[recordOptions.clear] = recordFunctions.clear
+    if (recordOptions.getChanges) data[recordOptions.getChanges] = recordFunctions.getChanges
     if (recordOptions.ref) data[recordOptions.ref] = recordFunctions.ref
   }
 
   return data
+}
+
+export function isEqual(a: any, b: any): boolean
+{
+  if (a === b)
+  {
+    return true
+  }
+
+  if (!a || !b)
+  {
+    return false
+  }
+
+  if (isArray(a) && isArray(b))
+  {
+    if (a.length !== b.length)
+    {
+      return false
+    }
+
+    for (let i = 0; i < a.length; i++)
+    {
+      if (!isEqual(a[i], b[i]))
+      {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  if (isObject(a) && isObject(b))
+  {
+    for (let prop in a)
+    {
+      if (!isEqual(a[prop], b[prop]))
+      {
+        return false
+      }
+    }
+
+    for (let prop in b)
+    {
+      if (!(prop in a))
+      {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  return false
 }

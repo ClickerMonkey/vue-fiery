@@ -2,6 +2,7 @@
 import * as firebase from 'firebase'
 
 
+
 type Query = firebase.firestore.Query
 type QuerySnapshot = firebase.firestore.QuerySnapshot
 type GetOptions = firebase.firestore.GetOptions
@@ -10,6 +11,7 @@ type QueryListenOptions = firebase.firestore.QueryListenOptions
 type DocumentListenOptions = firebase.firestore.DocumentListenOptions
 type DocumentReference = firebase.firestore.DocumentReference
 type CollectionReference = firebase.firestore.CollectionReference
+
 
 
 export type FieryData = { [prop: string]: any }
@@ -27,6 +29,8 @@ export type FieryFactory = (vm: FieryVue, options: FieryOptions) => FieryTarget
 export type FierySource = Query | DocumentReference | CollectionReference
 
 export type FierySources = { [property: string]: FierySource }
+
+export type FieryEntryMap = { [key: string]: FieryEntry }
 
 
 export interface FieryVue
@@ -59,13 +63,25 @@ export interface FieryOptions
 
   type?: { new (): FieryData }
 
+  newDocument: (encoded?: FieryData) => FieryData
+
+  newCollection: () => FieryMap | FieryData[]
+
   record?: boolean
 
   recordOptions: {
     set?: string
-    update?: string,
-    remove?: string,
+    update?: string
+    remove?: string
     ref?: string
+    [unspecified: string]: any
+  }
+
+  recordFunctions: {
+    set (fields?: string[]): any
+    update (fields?: string[]): any
+    remove (excludeSubs: boolean): any
+    ref (sub?: string): any
   }
 
   propValue: string
@@ -103,6 +119,8 @@ export interface FieryEntry
 
   target: FieryTarget
 
+  children: FieryEntryMap
+
   promise?: Promise<QuerySnapshot>
 
   off?: () => any
@@ -120,23 +138,21 @@ export interface FieryInstance
 
   storeKeyNext: number
 
+  stores: {
+    [storeKey: number]: Firestore
+  }
+
   storeIdToKey: {
     [id: string]: number
   }
 
-  stores: {
-    [storeKey: string]: Firestore
-  }
+  optionKeyNext: number
 
   options: {
     [optionKey: number]: FieryOptions
   }
 
-  optionKeyNext: number
-
-  entry: {
-    [entryKey: string]: FieryEntry
-  }
+  entry: FieryEntryMap
 
   entryList: (FieryEntry | null)[]
 

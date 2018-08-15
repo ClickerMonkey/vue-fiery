@@ -1,6 +1,3 @@
-<p align="center">
-<img src="https://i.imgur.com/ki0rbrX.png">
-</p>
 
 <p align="center">
 <img src="https://img.shields.io/npm/v/vue-fiery.svg">

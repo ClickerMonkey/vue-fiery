@@ -1,6 +1,6 @@
 {
     "name": "vue-fiery",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "author": "Philip Diffenderfer",
     "description": "The most extensive Google Firestore plugin for Vue",
     "license": "MIT",

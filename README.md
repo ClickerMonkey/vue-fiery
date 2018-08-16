@@ -22,6 +22,7 @@ Vue.js binding for Google Firebase Cloud Firestore.
 - Control over what properties are sent on save [example](#save-fields)
 - Encode & decode properties [example](#encode--decode-properties)
 - Adding the key to the document [example](#adding-key-to-object)
+- Sharing, extending, defining, and global options [example](#sharing-extending-defining-and-global-options)
 - Callbacks (error, success, missing, remove) [example](#callbacks)
 - Custom binding / unbinding
 
@@ -432,6 +433,67 @@ new Vue({
     log(todo) {
       // todo.id exists now
       console.log(todo)
+    }
+  }
+})
+```
+
+### Sharing, extending, defining, and global options
+
+```javascript
+// ==== Sharing ====
+let Todo = {
+  shared: true, // necessary for non-global or defined options that are used multiple times
+  include: ['name', 'done', 'done_at']
+}
+
+// ==== Extending ====
+let TodoWithChildren = {
+  shared: true
+  extends: Todo,
+  sub: {
+    children: Todo
+  }
+}
+
+// ==== Defining ====
+VueFiery.define('post', {
+  // shared is not necessary here
+  include: ['title', 'content', 'tags']
+})
+
+// or multiple
+VueFiery.define({
+  comment: {
+    include: ['author', 'content', 'posted_at', 'status'],
+    sub: {
+      replies: 'comment' // we can reference options by name now, even circularly
+    }
+  },
+  images: {
+    include: ['url', 'tags', 'updated_at', 'title']
+  }
+})
+
+// ==== Global ====
+VueFiery.setGlobalOptions({
+  // lets make everything active record
+  record: true,
+  recordOptions: {
+    update: 'save',         // object.save(fields?)
+    sync: 'sync',           // object.sync(fields?)
+    remove: 'remove',       // object.remove()
+    clear: 'clear',         // object.clear(fields)
+    ref: 'doc',             // object.doc().collection('subcollection')
+    getChanges: 'changes'   // object.changes((changes, remote, local) => {})
+  }
+})
+
+const db = firebaseApp.firestore();
+new Vue({
+  data() {
+    return {
+      comments: this.$fiery(db.collection('comment'), 'comment') // you can pass a named or Shared
     }
   }
 })

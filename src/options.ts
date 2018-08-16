@@ -92,33 +92,30 @@ export function getOptions (options?: string | Partial<FieryOptions>, vm?: Fiery
       : () => ([] as FieryData[])
   }
 
+  let excludeMap: FieryExclusions = {}
+
   if (!options.exclude)
   {
-    options.exclude = {}
-
     if (options.key)
     {
-      options.exclude[options.key] = true
+      excludeMap[options.key] = true
     }
   }
   else if (isArray(options.exclude))
   {
-    let excludeArray = options.exclude as string[]
-
-    options.exclude = {}
-
-    for (let i = 0; i < excludeArray.length; i++)
-    {
-      options.exclude[excludeArray[i]] = true
-    }
+    forEach(options.exclude, (value, key) => excludeMap[value] = true)
   }
-
-  let excludeMap: FieryExclusions = options.exclude as FieryExclusions
+  else
+  {
+    excludeMap = options.exclude as FieryExclusions
+  }
 
   excludeMap[options.propValue as string] = true
   excludeMap[PROP_UID] = true
 
-  forEach(options.recordOptions, (value, key) => (excludeMap[value] = true))
+  forEach(options.recordOptions, (value, key) => excludeMap[value] = true)
+
+  options.exclude = excludeMap
 
   if (options.sub)
   {

@@ -61,7 +61,7 @@ export function getEntry (vm: FieryVue, source: FierySource, optionsInput?: stri
   return entry
 }
 
-export function getEntryRecordFunctions(vm: FieryVue)
+export function getEntryRecordFunctions (vm: FieryVue)
 {
   return {
     sync: function(this: FieryData, fields?: FieryFields) {

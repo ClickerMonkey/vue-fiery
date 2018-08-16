@@ -99,7 +99,7 @@ export function createRecord (data: FieryData, entry: FieryEntry): FieryData
   return data
 }
 
-export function isEqual(a: any, b: any): boolean
+export function isEqual (a: any, b: any): boolean
 {
   if (a === b)
   {

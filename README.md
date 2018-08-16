@@ -20,7 +20,7 @@ Vue.js binding for Google Firebase Cloud Firestore.
 - Return instances of a class [example](#return-instances-of-a-class)
 - Add active record methods (sync, update, remove, clear, getChanges) [example](#active-record)
 - Control over what properties are sent on save [example](#save-fields)
-- Encode & decode properties [example](#encode-decode-properties)
+- Encode & decode properties [example](#encode--decode-properties)
 - Adding the key to the document [example](#adding-key-to-object)
 - Callbacks (error, success, missing, remove) [example](#callbacks)
 - Custom binding / unbinding

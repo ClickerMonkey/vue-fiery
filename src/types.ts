@@ -32,7 +32,7 @@ export type FierySources = { [property: string]: FierySource }
 
 export type FieryEntryMap = { [key: string]: FieryEntry }
 
-export type FieryChangesCallback = (changes: boolean, updated: FieryData, old: FieryData) => any
+export type FieryChangesCallback = (changes: boolean, remote: FieryData, local: FieryData) => any
 
 export type FieryEquality = (a: any, b: any) => boolean
 

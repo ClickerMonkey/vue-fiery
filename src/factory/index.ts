@@ -22,7 +22,7 @@ export function factory (vm: FieryVue, entry: FieryEntry): FieryTarget
 
 export function factoryInstance (vm: FieryVue): FieryInstanceFactory
 {
-  return (source: FierySource, options?: Partial<FieryOptions>): FieryTarget => {
+  return (source: FierySource, options?: string | Partial<FieryOptions>): FieryTarget => {
     return factory(vm, getEntry(vm, source, options))
   }
 }

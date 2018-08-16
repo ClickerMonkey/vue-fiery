@@ -42,8 +42,6 @@
           projectId: "oss-test-myfirebase",
       };
 
-      Vue.use(VueFiery)
-
       firebase.initializeApp(config);
 
       var db = firebase.firestore();
@@ -53,9 +51,27 @@
       }
       Todo.prototype = {
         markDone: function() {
-
+          this.done = true
+          this.done_at = Date.now()
+          this.$update()
         }
       }
+
+      VueFiery.define('todo', {
+        key: 'id',
+        include: ['name', 'done', 'assigned', 'done_at'],
+        type: Todo,
+        record: true,
+        decoders: {
+          done: function(d) {return d ? 1 : 0}
+        },
+        encoders: {
+          done: function(d) {return d ? true : false}
+        },
+        sub: {
+          children: 'todo'
+        }
+      })
 
       new Vue({
         el: '#app',
@@ -67,30 +83,10 @@
             persons: this.$fiery(db.collection('persons')),
             personsOnce: this.$fiery(db.collection('persons'), {once: true}),
             personMap: this.$fiery(db.collection('persons'), {map: true}),
-            phil: this.$fiery(db.collection('persons').doc('kVfWHIbahbSyudbhqhf1')),
 
-            todos: this.$fiery(db.collection('todos'), {
-              key: 'id',
-              include: ['name', 'done', 'assigned'],
-              type: Todo,
-              record: true,
-              decoders: {
-                done: function(d) {return d ? 1 : 0}
-              },
-              encoders: {
-                done: function(d) {return d ? true : false}
-              },
-              sub: {
-                children: {
-                  type: Todo,
-                  record: true,
-                  include: ['name', 'done']
-                }
-              }
-            }),
-
+            todos: this.$fiery(db.collection('todos'), 'todo'),
             todosDone: this.$fiery(db.collection('todos'), {
-              type: Todo,
+              extend: 'todo',
               query: function(s) {
                 return s.where('done', '==', true)
               }

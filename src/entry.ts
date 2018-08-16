@@ -1,8 +1,9 @@
 
 
+import { FieryOptions, FieryInstance, FieryTarget, FieryEntry, FierySources, FieryVue, FierySource, FieryData, FieryChangesCallback, FieryEquality, FieryFields } from './types'
 import { isCollectionSource } from './util'
 import { getOptions } from './options'
-import { FieryOptions, FieryInstance, FieryTarget, FieryEntry, FierySources, FieryVue, FierySource } from './types'
+import * as operations from './operations'
 
 
 export function closeEntry (entry: FieryEntry): void
@@ -15,14 +16,15 @@ export function closeEntry (entry: FieryEntry): void
   }
 }
 
-export function getEntry (vm: FieryVue, source: FierySource, optionsInput?: Partial<FieryOptions>, entryKeyInput?: string, useRawOptions: boolean = false)
+export function getEntry (vm: FieryVue, source: FierySource, optionsInput?: string | Partial<FieryOptions>, entryKeyInput?: string, useRawOptions: boolean = false)
 {
   const options: FieryOptions = useRawOptions
     ? optionsInput as FieryOptions
-    : getOptions(vm, optionsInput, source)
+    : getOptions(optionsInput, vm)
   const target: FieryTarget = isCollectionSource(source)
     ? options.newCollection()
     : options.newDocument()
+  const recordFunctions = getEntryRecordFunctions(vm)
   const property: string | undefined = options.property
   const entryKey: string = entryKeyInput || property || ''
   const fiery: FieryInstance = vm.$fiery
@@ -30,7 +32,7 @@ export function getEntry (vm: FieryVue, source: FierySource, optionsInput?: Part
 
   let existing: FieryEntry | undefined = fiery.entry[ entryKey ]
   let children = {}
-  let entry: FieryEntry = { source, options, target, children }
+  let entry: FieryEntry = { source, options, target, children, recordFunctions }
 
   if (existing)
   {
@@ -57,4 +59,31 @@ export function getEntry (vm: FieryVue, source: FierySource, optionsInput?: Part
   }
 
   return entry
+}
+
+export function getEntryRecordFunctions(vm: FieryVue)
+{
+  return {
+    sync: function(this: FieryData, fields?: FieryFields) {
+      return operations.sync.call(vm, this, fields)
+    },
+    update: function(this: FieryData, fields?: FieryFields) {
+      return operations.update.call(vm, this, fields)
+    },
+    remove: function(this: FieryData, excludeSubs: boolean = false) {
+      return operations.remove.call(vm, this, excludeSubs)
+    },
+    ref: function(this: FieryData, sub?: string) {
+      return operations.ref.call(vm, this, sub)
+    },
+    clear: function(this: FieryData, props: FieryFields) {
+      return operations.clear.call(vm, this, props)
+    },
+    getChanges: function(this: FieryData,
+      fieldsOrCallback: FieryFields | FieryChangesCallback,
+      callbackOrEquality?: FieryChangesCallback | FieryEquality,
+      equalityOrNothing?: FieryEquality) {
+      return operations.getChanges.call(vm, this, fieldsOrCallback, callbackOrEquality, equalityOrNothing)
+    }
+  }
 }

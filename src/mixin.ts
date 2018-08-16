@@ -1,10 +1,12 @@
 
 
 import { FieryVue, FieryInstance, FieryInstanceFactory, FieryTarget, FierySource, FieryOptions, FieryEntry } from './types'
-import { getMetadata } from './util'
+import { getMetadata, forEach } from './util'
 import { getEntry, closeEntry } from './entry'
-import * as operations from './operations'
+import { globalOptions } from './options'
 import { factoryInstance } from './factory'
+import * as operations from './operations'
+
 
 
 
@@ -14,10 +16,9 @@ export function init (this: FieryVue): void
   this.$fiery.stores = {}
   this.$fiery.storeKeyNext = 0
   this.$fiery.storeIdToKey = {}
-  this.$fiery.options = {}
-  this.$fiery.optionKeyNext = 0
   this.$fiery.entry = {}
   this.$fiery.entryList = []
+  this.$fiery.options = {}
   this.$fiery.update = operations.update.bind(this)
   this.$fiery.sync = operations.sync.bind(this)
   this.$fiery.remove = operations.remove.bind(this)
@@ -32,10 +33,13 @@ export function init (this: FieryVue): void
 
 export function destroy (this: FieryVue): void
 {
+  forEach(this.$fiery.options, opt => delete globalOptions.map[opt.id])
+
   this.$fiery.stores = {}
   this.$fiery.entry = {}
   this.$fiery.entryList.forEach(closeEntry)
   this.$fiery.entryList = []
+  this.$fiery.options = {}
   this.$fiery = <any>(() => {}) as FieryInstance
   this.$fires = {}
 }

@@ -22,7 +22,7 @@ export type FieryTarget = FieryData[] | FieryData | FieryMap
 
 export type FieryExclusions = { [field: string]: boolean }
 
-export type FieryInstanceFactory = (source: FierySource, options?: Partial<FieryOptions>) => FieryTarget
+export type FieryInstanceFactory = (source: FierySource, options?: string | Partial<FieryOptions>) => FieryTarget
 
 export type FieryFactory = (vm: FieryVue, options: FieryOptions) => FieryTarget
 
@@ -36,6 +36,13 @@ export type FieryChangesCallback = (changes: boolean, remote: FieryData, local: 
 
 export type FieryEquality = (a: any, b: any) => boolean
 
+export type FieryMergeStrategy = (a: any, b: any) => any
+
+export type FieryMergeStrategies = { [option: string]: FieryMergeStrategy }
+
+export type FieryOptionsMap = { [name: string]: Partial<FieryOptions> }
+
+export type FieryFields = string | string[]
 
 
 export interface FieryVue
@@ -44,15 +51,27 @@ export interface FieryVue
 
   $fires: FierySources
 
+  // Vue properties & functions
+
   [prop: string]: any
 
   $emit: (event: string, eventObject?: any) => void
+
+  $delete: (object: any, key: string | number) => any
+
+  $set: (object: any, key: string | number, value?: any) => any
 }
 
 export interface FieryOptions
 {
 
+  extends?: string | Partial<FieryOptions>
+
   id: number
+
+  shared: boolean
+
+  vm?: FieryVue
 
   property?: string
 
@@ -97,18 +116,6 @@ export interface FieryOptions
     [unspecified: string]: any
   }
 
-  recordFunctions:
-  {
-    sync: (fields?: string[]) => any
-    update: (fields?: string[]) => any
-    remove: (excludeSubs: boolean) => any
-    ref: (sub?: string) => any
-    clear: (props: string | string[]) => any
-    getChanges: (fieldsOrCallback: string[] | FieryChangesCallback,
-      callbackOrEquality?: FieryChangesCallback | FieryEquality,
-      equalityOrNothing?: FieryEquality) => any
-  }
-
   propValue: string
 
   onceOptions?: GetOptions
@@ -147,6 +154,18 @@ export interface FieryEntry
 
   children: FieryEntryMap
 
+  recordFunctions:
+  {
+    sync: (fields?: FieryFields) => any
+    update: (fields?: FieryFields) => any
+    remove: (excludeSubs: boolean) => any
+    ref: (sub?: string) => any
+    clear: (props: FieryFields) => any
+    getChanges: (fieldsOrCallback: FieryFields | FieryChangesCallback,
+      callbackOrEquality?: FieryChangesCallback | FieryEquality,
+      equalityOrNothing?: FieryEquality) => any
+  }
+
   promise?: Promise<QuerySnapshot>
 
   off?: () => any
@@ -160,7 +179,7 @@ export interface FieryEntry
 export interface FieryInstance
 {
 
-  (source: FierySource, options?: Partial<FieryOptions>): FieryTarget
+  (source: FierySource, options?: string | Partial<FieryOptions>): FieryTarget
 
   storeKeyNext: number
 
@@ -174,8 +193,6 @@ export interface FieryInstance
     [id: string]: number
   }
 
-  optionKeyNext: number
-
   options:
   {
     [optionKey: number]: FieryOptions
@@ -185,16 +202,16 @@ export interface FieryInstance
 
   entryList: (FieryEntry | null)[]
 
-  update: (data: FieryData, fields?: string[]) => Promise<void> | undefined
+  update: (data: FieryData, fields?: FieryFields) => Promise<void> | undefined
 
-  sync: (data: FieryData, fields?: string[]) => Promise<void> | undefined
+  sync: (data: FieryData, fields?: FieryFields) => Promise<void> | undefined
 
   remove: (data: FieryData) => Promise<void> | undefined
 
-  clear: (data: FieryData, props: string | string[]) => Promise<void> | undefined
+  clear: (data: FieryData, props: FieryFields) => Promise<void> | undefined
 
   getChanges: (data: FieryData,
-    fieldsOrCallback: string[] | FieryChangesCallback,
+    fieldsOrCallback: FieryFields | FieryChangesCallback,
     callbackOrEquality?: FieryChangesCallback | FieryEquality,
     equalityOrNothing?: FieryEquality) => Promise<void> | undefined
 

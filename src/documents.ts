@@ -4,8 +4,8 @@ import * as firebase from 'firebase'
 
 
 import { PROP_UID, UID_SEPARATOR, STORE_SEPARATOR, ENTRY_SEPARATOR } from './constants'
-import { FieryOptions, FieryInstance, FieryEntry, FieryData, FieryMap, FieryVue } from './types'
-import { isObject, forEach, getMetadata, createRecord } from './util'
+import { FieryOptions, FieryInstance, FieryEntry, FieryData, FieryMap, FieryVue, FieryFields } from './types'
+import { isObject, forEach, getMetadata, createRecord, getFields } from './util'
 import { closeEntry, getEntry } from './entry'
 import { factory } from './factory'
 
@@ -16,7 +16,7 @@ type Firestore = firebase.firestore.Firestore
 
 
 
-export function decodeDocument(encoded: FieryData, options: FieryOptions): FieryData
+export function decodeDocument (encoded: FieryData, options: FieryOptions): FieryData
 {
   if (options.decode)
   {
@@ -34,6 +34,48 @@ export function decodeDocument(encoded: FieryData, options: FieryOptions): Fiery
   }
 
   return encoded
+}
+
+export function encodeDocument (data: FieryData, options: FieryOptions, fields?: FieryFields): FieryData
+{
+  const values: FieryData = {}
+  const explicit: string[] = getFields(fields, options.include) as string[]
+
+  if (explicit)
+  {
+    for (let i = 0; i < explicit.length; i++)
+    {
+      let prop: string = explicit[i]
+
+      if (prop in data)
+      {
+        values[prop] = data[prop]
+      }
+    }
+  }
+  else
+  {
+    for (let prop in data)
+    {
+      if (!(prop in options.exclude))
+      {
+        values[prop] = data[prop]
+      }
+    }
+  }
+
+  if (options.encoders)
+  {
+    for (let prop in options.encoders)
+    {
+      if (prop in values)
+      {
+        values[prop] = options.encoders[prop](values[prop], data)
+      }
+    }
+  }
+
+  return values
 }
 
 export function parseDocument (doc: DocumentSnapshot, options: FieryOptions): FieryData
@@ -65,7 +107,7 @@ export function refreshDocument (vm: FieryVue, entry: FieryEntry, doc: DocumentS
     data[PROP_UID] = identifier
 
     copyData(vm, data, decoded)
-    createRecord(data, options)
+    createRecord(data, entry)
 
     if (options.sub)
     {
@@ -94,7 +136,7 @@ export function refreshDocument (vm: FieryVue, entry: FieryEntry, doc: DocumentS
       }
     }
 
-    createRecord(replaced, options)
+    createRecord(replaced, entry)
 
     data = copyData(vm, replaced, decoded)
   }

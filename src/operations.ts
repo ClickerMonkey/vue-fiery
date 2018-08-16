@@ -1,29 +1,29 @@
 
-import { FieryVue, FieryOptions, FieryEntry, FieryData, FierySource, FieryChangesCallback, FieryEquality } from './types'
-import { parseDocument } from './documents'
-import { getMetadata, forEach, isEqual } from './util'
+import { FieryVue, FieryOptions, FieryEntry, FieryData, FierySource, FieryChangesCallback, FieryEquality, FieryFields } from './types'
+import { parseDocument, encodeDocument } from './documents'
+import { getMetadata, forEach, isEqual, isDefined, isFunction, getFields } from './util'
 
 
 
-export function update (this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
+export function update (this: FieryVue, data: FieryData, fields?: FieryFields): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
 
   if (store && path)
   {
-    const values: FieryData = getValues(data, options, fields)
+    const values: FieryData = encodeDocument(data, options, fields)
 
     return store.doc(path).update(values)
   }
 }
 
-export function sync (this: FieryVue, data: FieryData, fields?: string[]): Promise<void> | undefined
+export function sync (this: FieryVue, data: FieryData, fields?: FieryFields): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
 
   if (store && path)
   {
-    const values = getValues(data, options, fields)
+    const values = encodeDocument(data, options, fields)
 
     return store.doc(path).set(values)
   }
@@ -50,10 +50,10 @@ export function remove (this: FieryVue, data: FieryData, excludeSubs: boolean =
   }
 }
 
-export function clear (this: FieryVue, data: FieryData, props: string | string[]): Promise<void> | undefined
+export function clear (this: FieryVue, data: FieryData, props: FieryFields): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
-  const propsArray: string[] = props instanceof Array ? props : [props]
+  const propsArray: string[] = getFields(props) as string[]
 
   if (store && path)
   {
@@ -95,35 +95,35 @@ export function getChanges (this: FieryVue, data: FieryData,
   equalityOrNothing?: FieryEquality): Promise<void> | undefined
 {
   const { store, path, options } = getMetadata(this, data)
-  const fields: string[] | undefined = typeof fieldsOrCallback === 'string' ? fieldsOrCallback as string[] : undefined
+  const fields: FieryFields | undefined = isFunction(fieldsOrCallback) ? undefined : getFields(fieldsOrCallback as FieryFields)
   const callback: FieryChangesCallback = (fields ? callbackOrEquality : fieldsOrCallback) as FieryChangesCallback
   const equality: FieryEquality = ((fields ? equalityOrNothing : callbackOrEquality) || isEqual) as FieryEquality
 
   if (store && path)
   {
-    const current: FieryData = getValues(data, options, fields)
+    const current: FieryData = encodeDocument(data, options, fields)
 
     return store.doc(path).get().then((doc) =>
     {
       const encoded: FieryData = parseDocument(doc, options)
-      const updated: FieryData = {}
-      const old: FieryData = {}
+      const remote: FieryData = {}
+      const local: FieryData = {}
       let changes = false
 
       for (let prop in current)
       {
-        let valueUpdated = encoded[prop]
-        let valueOld = current[prop]
+        let remoteValue = encoded[prop]
+        let localValue = current[prop]
 
-        if (!equality(valueOld, valueUpdated))
+        if (!equality(remoteValue, localValue))
         {
           changes = true
-          updated[prop] = valueUpdated
-          old[prop] = valueOld
+          remote[prop] = remoteValue
+          local[prop] = localValue
         }
       }
 
-      callback(changes, updated, old)
+      callback(changes, remote, local)
     })
   }
 }
@@ -138,46 +138,4 @@ export function ref (this: FieryVue, data: FieryData, sub?: string): FierySource
 
     return sub ? doc.collection(sub) : doc
   }
-}
-
-export function getValues (data: FieryData, options: FieryOptions, fields?: string[]): FieryData
-{
-  const explicit: string[] = fields || options.include
-  const values: FieryData = {}
-
-  if (explicit)
-  {
-    for (let i = 0; i < explicit.length; i++)
-    {
-      let prop: string = explicit[i]
-
-      if (prop in data)
-      {
-        values[prop] = data[prop]
-      }
-    }
-  }
-  else
-  {
-    for (let prop in data)
-    {
-      if (!(prop in options.exclude))
-      {
-        values[prop] = data[prop]
-      }
-    }
-  }
-
-  if (options.encoders)
-  {
-    for (let prop in options.encoders)
-    {
-      if (prop in values)
-      {
-        values[prop] = options.encoders[prop](values[prop], data)
-      }
-    }
-  }
-
-  return values
 }

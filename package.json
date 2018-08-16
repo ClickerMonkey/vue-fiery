@@ -6,8 +6,8 @@
     "license": "MIT",
     "main": "./dist/vue-fiery.js",
     "scripts": {
-        "dev": "cross-env NODE_ENV=development webpack-dev-server --open --inline --hot",
-        "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
+        "dev": "webpack --mode development",
+        "build": "webpack --mode production"
     },
     "keywords": [
         "vue",
@@ -23,14 +23,17 @@
         "vue": "^1.0.28"
     },
     "devDependencies": {
+        "@types/node": "^10.7.1",
+        "@types/webpack": "^4.4.10",
         "cross-env": "^3.0.0",
         "css-loader": "^0.25.0",
         "file-loader": "^0.9.0",
-        "ts-loader": "^1.2.0",
-        "typescript": "^2.0.0",
+        "ts-loader": "^4.0.0",
+        "ts-node": "^7.0.1",
+        "typescript": "^2.9.2",
         "vue-loader": "^10.0.0",
         "vue-template-compiler": "^2.1.0",
-        "webpack": "^1.13.0",
-        "webpack-dev-server": "^1.16.0"
+        "webpack": "^4.16.5",
+        "webpack-cli": "^3.1.0"
     }
 }

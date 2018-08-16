@@ -3,7 +3,7 @@ import * as firebase from 'firebase'
 
 
 import { PROP_UID, UID_SEPARATOR } from './constants'
-import { FieryOptions, FierySource, FieryVue, FieryData, FieryMetadata } from './types'
+import { FieryOptions, FierySource, FieryVue, FieryData, FieryMetadata, FieryEntry, FieryFields } from './types'
 
 
 type Firestore = firebase.firestore.Firestore
@@ -25,9 +25,24 @@ export function isArray (x?: any): boolean
   return x && x instanceof Array
 }
 
+export function isDefined (x?: any): boolean
+{
+  return typeof x !== 'undefined'
+}
+
+export function coalesce (a?: any, b?: any): any
+{
+  return isDefined(a) ? a : b
+}
+
 export function isCollectionSource (source: FierySource): boolean
 {
   return !!((<any>source).where)
+}
+
+export function getFields (fields?: FieryFields, otherwise?: string[]): string[] | undefined
+{
+  return !fields ? otherwise : (typeof fields === 'string' ? [fields] : fields)
 }
 
 export function forEach (iterable: any, callback: (item: any, key?: number | string, iterable?: any) => any): boolean
@@ -64,12 +79,14 @@ export function getMetadata (vm: FieryVue, data: FieryData): FieryMetadata
   return { uid, path, storeKey, store, optionKey, options }
 }
 
-export function createRecord (data: FieryData, options: FieryOptions): FieryData
+export function createRecord (data: FieryData, entry: FieryEntry): FieryData
 {
+  const options: FieryOptions = entry.options
+
   if (options.record)
   {
     let recordOptions = options.recordOptions
-    let recordFunctions = options.recordFunctions
+    let recordFunctions = entry.recordFunctions
 
     if (recordOptions.sync) data[recordOptions.sync] = recordFunctions.sync
     if (recordOptions.update) data[recordOptions.update] = recordFunctions.update

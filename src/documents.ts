@@ -8,6 +8,7 @@ import { FieryOptions, FieryInstance, FieryEntry, FieryData, FieryMap, FieryVue,
 import { isObject, forEach, getMetadata, createRecord, getFields } from './util'
 import { closeEntry, getEntry } from './entry'
 import { factory } from './factory'
+import { getStoreKey } from './store'
 
 
 
@@ -101,7 +102,7 @@ export function refreshDocument (vm: FieryVue, entry: FieryEntry, doc: DocumentS
 
   if (!data)
   {
-    const identifier: string = getDocumentIdentifier(vm, options, doc)
+    const identifier: string = getDocumentIdentifier(options, doc)
 
     data = options.newDocument(decoded)
     data[PROP_UID] = identifier
@@ -175,7 +176,7 @@ export function destroyDocuments (vm: FieryVue, map: FieryMap, fromObject?: Fier
 
 export function destroyDocument (vm: FieryVue, data: FieryData): void
 {
-  let { path, options } = getMetadata(vm, data)
+  let { path, options } = getMetadata(data)
 
   if (options.sub)
   {
@@ -208,30 +209,11 @@ export function destroyDocument (vm: FieryVue, data: FieryData): void
   }
 }
 
-export function getDocumentIdentifier (vm: FieryVue, options: FieryOptions, doc: DocumentSnapshot)
+export function getDocumentIdentifier (options: FieryOptions, doc: DocumentSnapshot)
 {
-  return getStoreKey(vm, doc) +
+  return getStoreKey(doc) +
     UID_SEPARATOR +
     options.id +
     UID_SEPARATOR +
     doc.ref.path
-}
-
-export function getStoreKey (vm: FieryVue, doc: DocumentSnapshot): number
-{
-  const firestore = (<any>doc)._firestore
-  const db = firestore._databaseId
-  const id: string = db.database + STORE_SEPARATOR + db.projectId
-
-  const fiery: FieryInstance = vm.$fiery
-  let key: number = fiery.storeIdToKey[id]
-
-  if (!key)
-  {
-    key = ++fiery.storeKeyNext
-    fiery.stores[key] = firestore
-    fiery.storeIdToKey[id] = key
-  }
-
-  return key
 }

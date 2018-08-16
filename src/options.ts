@@ -32,6 +32,11 @@ export const globalOptions =
 }
 
 
+export function getOptionsByKey (key: string): FieryOptions
+{
+  return globalOptions.map[parseInt(key)] as FieryOptions
+}
+
 export function getOptions (options?: string | Partial<FieryOptions>, vm?: FieryVue): FieryOptions
 {
   // If a string is passed - returned a defined option.

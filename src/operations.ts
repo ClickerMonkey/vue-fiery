@@ -7,7 +7,7 @@ import { getMetadata, forEach, isEqual, isDefined, isFunction, getFields } from 
 
 export function update (this: FieryVue, data: FieryData, fields?: FieryFields): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(this, data)
+  const { store, path, options } = getMetadata(data)
 
   if (store && path)
   {
@@ -19,7 +19,7 @@ export function update (this: FieryVue, data: FieryData, fields?: FieryFields): 
 
 export function sync (this: FieryVue, data: FieryData, fields?: FieryFields): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(this, data)
+  const { store, path, options } = getMetadata(data)
 
   if (store && path)
   {
@@ -31,7 +31,7 @@ export function sync (this: FieryVue, data: FieryData, fields?: FieryFields): Pr
 
 export function remove (this: FieryVue, data: FieryData, excludeSubs: boolean = false): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(this, data)
+  const { store, path, options } = getMetadata(data)
 
   if (store && path)
   {
@@ -52,7 +52,7 @@ export function remove (this: FieryVue, data: FieryData, excludeSubs: boolean =
 
 export function clear (this: FieryVue, data: FieryData, props: FieryFields): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(this, data)
+  const { store, path, options } = getMetadata(data)
   const propsArray: string[] = getFields(props) as string[]
 
   if (store && path)
@@ -94,7 +94,7 @@ export function getChanges (this: FieryVue, data: FieryData,
   callbackOrEquality?: FieryChangesCallback | FieryEquality,
   equalityOrNothing?: FieryEquality): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(this, data)
+  const { store, path, options } = getMetadata(data)
   const fields: FieryFields | undefined = isFunction(fieldsOrCallback) ? undefined : getFields(fieldsOrCallback as FieryFields)
   const callback: FieryChangesCallback = (fields ? callbackOrEquality : fieldsOrCallback) as FieryChangesCallback
   const equality: FieryEquality = ((fields ? equalityOrNothing : callbackOrEquality) || isEqual) as FieryEquality
@@ -130,7 +130,7 @@ export function getChanges (this: FieryVue, data: FieryData,
 
 export function ref (this: FieryVue, data: FieryData, sub?: string): FierySource | undefined
 {
-  const { store, path } = getMetadata(this, data)
+  const { store, path } = getMetadata(data)
 
   if (store && path)
   {

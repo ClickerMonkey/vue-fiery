@@ -27,7 +27,7 @@ export function init (this: FieryVue): void
   this.$fiery.ref = operations.ref.bind(this)
   this.$fiery.link = link.bind(this)
   this.$fiery.destroy = destroy.bind(this)
-  this.$fiery.getMetadata = (data) => getMetadata(this, data)
+  this.$fiery.getMetadata = getMetadata
   this.$fires = {}
 }
 

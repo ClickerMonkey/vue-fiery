@@ -4,6 +4,8 @@ import * as firebase from 'firebase'
 
 import { PROP_UID, UID_SEPARATOR } from './constants'
 import { FieryOptions, FierySource, FieryVue, FieryData, FieryMetadata, FieryEntry, FieryFields } from './types'
+import { getStoreByKey } from './store'
+import { getOptionsByKey } from './options'
 
 
 type Firestore = firebase.firestore.Firestore
@@ -69,12 +71,12 @@ export function forEach (iterable: any, callback: (item: any, key?: number | str
   return false
 }
 
-export function getMetadata (vm: FieryVue, data: FieryData): FieryMetadata
+export function getMetadata (data: FieryData): FieryMetadata
 {
   const uid: string = data[PROP_UID]
   const [storeKey, optionKey, path] = uid.split(UID_SEPARATOR) as string[]
-  const store: Firestore = vm.$fiery.stores[parseInt(storeKey)]
-  const options: FieryOptions = vm.$fiery.options[parseInt(optionKey)]
+  const store: Firestore = getStoreByKey( storeKey )
+  const options: FieryOptions = getOptionsByKey( optionKey )
 
   return { uid, path, storeKey, store, optionKey, options }
 }

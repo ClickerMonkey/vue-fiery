@@ -11,6 +11,7 @@ type QueryListenOptions = firebase.firestore.QueryListenOptions
 type DocumentListenOptions = firebase.firestore.DocumentListenOptions
 type DocumentReference = firebase.firestore.DocumentReference
 type CollectionReference = firebase.firestore.CollectionReference
+type DocumentSnapshot = firebase.firestore.DocumentSnapshot
 
 
 
@@ -22,13 +23,9 @@ export type FieryTarget = FieryData[] | FieryData | FieryMap
 
 export type FieryExclusions = { [field: string]: boolean }
 
-export type FieryInstanceFactory = (source: FierySource, options?: string | Partial<FieryOptions>) => FieryTarget
-
-export type FieryFactory = (vm: FieryVue, options: FieryOptions) => FieryTarget
-
 export type FierySource = Query | DocumentReference | CollectionReference
 
-export type FierySources = { [property: string]: FierySource }
+export type FierySources = { [name: string]: FierySource }
 
 export type FieryEntryMap = { [key: string]: FieryEntry }
 
@@ -42,38 +39,44 @@ export type FieryMergeStrategies = { [option: string]: FieryMergeStrategy }
 
 export type FieryOptionsMap = { [name: string]: Partial<FieryOptions> }
 
+export type FieryOptionsInput = string | Partial<FieryOptions>
+
 export type FieryFields = string | string[]
 
+export type FieryCache = { [uid: string]: FieryCacheEntry }
 
-export interface FieryVue
+
+export interface FierySystem
 {
-  $fiery: FieryInstance
+  removeNamed: (name: string) => any
 
-  $fires: FierySources
+  setProperty: (target: any, property: string, value: any) => any
 
-  // Vue properties & functions
+  removeProperty: (target: any, property: string) => any
 
-  [prop: string]: any
+  arrayInsert: (target: any[], index: number, value: any) => any
 
-  $emit: (event: string, eventObject?: any) => void
+  arrayRemove: (target: any[], index: number) => any
 
-  $delete: (object: any, key: string | number) => any
+  arrayMove: (target: any[], fromIndex: number, toIndex: number, value: any) => any
 
-  $set: (object: any, key: string | number, value?: any) => any
+  arraySet: (target: any[], index: number, value: any) => any
+
+  arrayAdd: (target: any[], value: any) => any
+
+  arrayClear: (target: any[]) => any
 }
 
 export interface FieryOptions
 {
 
-  extends?: string | Partial<FieryOptions>
+  extends?: FieryOptionsInput
 
   id: number
 
   shared: boolean
 
-  vm?: FieryVue
-
-  property?: string
+  instance?: FieryInstance
 
   key?: string
 
@@ -81,9 +84,9 @@ export interface FieryOptions
 
   map?: boolean
 
-  once?: boolean
+  doc?: boolean
 
-  reset?: boolean
+  once?: boolean
 
   type?: { new (): FieryData }
 
@@ -143,16 +146,80 @@ export interface FieryOptions
 
 }
 
+export interface FieryInstance
+{
+
+  (source: FierySource, options?: FieryOptionsInput, name?: string): FieryTarget
+
+  system: FierySystem
+
+  options:
+  {
+    [optionKey: number]: FieryOptions
+  }
+
+  sources:
+  {
+    [name: string]: FierySource
+  }
+
+  entry: FieryEntryMap
+
+  entryList: (FieryEntry | null)[]
+
+  cache: FieryCache
+
+  update: (data: FieryData, fields?: FieryFields) => Promise<void> | undefined
+
+  sync: (data: FieryData, fields?: FieryFields) => Promise<void> | undefined
+
+  remove: (data: FieryData) => Promise<void> | undefined
+
+  clear: (data: FieryData, props: FieryFields) => Promise<void> | undefined
+
+  getChanges: (data: FieryData,
+    fieldsOrCallback: FieryFields | FieryChangesCallback,
+    callbackOrEquality?: FieryChangesCallback | FieryEquality,
+    equalityOrNothing?: FieryEquality) => Promise<void> | undefined
+
+  ref: (data: FieryData) => FierySource | undefined
+
+  destroy: () => void
+}
+
+export interface FieryMetadata
+{
+
+  uid: string
+
+  path: string
+
+  storeKey: number
+
+  store: Firestore
+
+  optionKey: string
+
+  options: FieryOptions
+
+}
+
 export interface FieryEntry
 {
+
+  name?: string
 
   options: FieryOptions
 
   source: FierySource
 
-  target: FieryTarget
+  instance: FieryInstance
 
-  children: FieryEntryMap
+  storeKey: number
+
+  target?: FieryTarget
+
+  children: FieryCache
 
   recordFunctions:
   {
@@ -172,71 +239,29 @@ export interface FieryEntry
 
   id?: number
 
-  index?: number
+  index?: number,
+
+  live: boolean
 
 }
 
-export interface FieryInstance
-{
-
-  (source: FierySource, options?: string | Partial<FieryOptions>): FieryTarget
-
-  storeKeyNext: number
-
-  stores:
-  {
-    [storeKey: number]: Firestore
-  }
-
-  storeIdToKey:
-  {
-    [id: string]: number
-  }
-
-  options:
-  {
-    [optionKey: number]: FieryOptions
-  }
-
-  entry: FieryEntryMap
-
-  entryList: (FieryEntry | null)[]
-
-  update: (data: FieryData, fields?: FieryFields) => Promise<void> | undefined
-
-  sync: (data: FieryData, fields?: FieryFields) => Promise<void> | undefined
-
-  remove: (data: FieryData) => Promise<void> | undefined
-
-  clear: (data: FieryData, props: FieryFields) => Promise<void> | undefined
-
-  getChanges: (data: FieryData,
-    fieldsOrCallback: FieryFields | FieryChangesCallback,
-    callbackOrEquality?: FieryChangesCallback | FieryEquality,
-    equalityOrNothing?: FieryEquality) => Promise<void> | undefined
-
-  ref: (data: FieryData) => FierySource | undefined
-
-  getMetadata: (data: FieryData) => FieryMetadata
-
-  link: () => void
-
-  destroy: () => void
-}
-
-export interface FieryMetadata
+export interface FieryCacheEntry
 {
 
   uid: string
 
-  path: string
+  data: FieryData
 
-  storeKey: string
+  doc?: DocumentSnapshot
 
-  store: Firestore
+  uses: number
 
-  optionKey: string
+  sub: FieryEntryMap
 
-  options: FieryOptions
+  firstEntry: FieryEntry
+
+  entries: FieryEntry[]
+
+  removed: boolean
 
 }

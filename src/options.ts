@@ -1,10 +1,9 @@
 
-
-
 import { PROP_UID, PROP_VALUE, RECORD_OPTIONS } from './constants'
-import { FieryOptions, FieryOptionsMap, FieryInstance, FieryVue, FieryExclusions, FierySource, FieryData, FieryMap, FieryChangesCallback, FieryEquality, FieryMergeStrategy, FieryMergeStrategies } from './types'
+import { FieryOptionsInput, FieryOptions, FieryOptionsMap, FieryInstance, FieryExclusions, FierySource, FieryData, FieryMap, FieryChangesCallback, FieryEquality, FieryMergeStrategy, FieryMergeStrategies } from './types'
 import { isObject, isFunction, isArray, coalesce, forEach, isDefined } from './util'
 import * as operations from './operations'
+
 
 
 export const globalOptions =
@@ -16,12 +15,19 @@ export const globalOptions =
   defaults:
   {
     onError: (message: any) => {},
+
     onMissing: () => {},
+
     onSuccess: (results: any) => {},
+
     onRemove: () => {},
+
     liveOptions: {},
+
     propValue: PROP_VALUE,
+
     recordOptions: RECORD_OPTIONS,
+
     newDocument: (encoded?: FieryData) => ({} as FieryData)
 
   } as Partial<FieryOptions>,
@@ -37,14 +43,14 @@ export function getOptionsByKey (key: string): FieryOptions
   return globalOptions.map[parseInt(key)] as FieryOptions
 }
 
-export function getOptions (options?: string | Partial<FieryOptions>, vm?: FieryVue): FieryOptions
+export function getOptions (options?: FieryOptionsInput, instance?: FieryInstance): FieryOptions
 {
   // If a string is passed - returned a defined option.
   if (typeof options === 'string')
   {
     if (!(options in globalOptions.defined))
     {
-      throw 'The definition ' + options + ' was not found. You must call VueFiery.define before you use the definition'
+      throw 'The definition ' + options + ' was not found. You must call define before you use the definition'
     }
 
     // Ensure the defined option is properly populated
@@ -77,15 +83,15 @@ export function getOptions (options?: string | Partial<FieryOptions>, vm?: Fiery
   performMerge(options, globalOptions.user)
   performMerge(options, globalOptions.defaults)
 
-  if (vm && !options.shared)
+  if (instance && !options.shared)
   {
-    options.vm = vm
-    vm.$fiery.options[ options.id ] = options as FieryOptions
+    options.instance = instance
+    instance.options[ options.id ] = options as FieryOptions
   }
 
   if (options.type)
   {
-    let typeConstructor = options.type
+    const typeConstructor = options.type
 
     options.newDocument = (encoded?: FieryData) => (new typeConstructor() as FieryData)
   }
@@ -127,9 +133,8 @@ export function getOptions (options?: string | Partial<FieryOptions>, vm?: Fiery
     for (let subProp in options.sub)
     {
       let subOptionsInput = options.sub[subProp] as Partial<FieryOptions>
-      let subOptions = getOptions(subOptionsInput, vm)
+      let subOptions = getOptions(subOptionsInput, instance)
 
-      subOptions.property = subProp
       subOptions.parent = options as FieryOptions
 
       options.sub[subProp] = subOptions
@@ -140,24 +145,46 @@ export function getOptions (options?: string | Partial<FieryOptions>, vm?: Fiery
   return options as FieryOptions
 }
 
+export function recycleOptions (options: FieryOptions)
+{
+  const instance: FieryInstance | undefined = options.instance
+
+  if (instance)
+  {
+    delete instance.options[options.id]
+  }
+}
 
 export function define (nameOrMap: string | FieryOptionsMap, namedOptions?: Partial<FieryOptions>): void
 {
   if (typeof nameOrMap === 'string')
   {
-    globalOptions.defined[nameOrMap] = namedOptions as Partial<FieryOptions>
+    const options: Partial<FieryOptions> = namedOptions as Partial<FieryOptions>
+
+    options.shared = true
+
+    globalOptions.defined[nameOrMap] = options
   }
   else
   {
     for (let name in nameOrMap)
     {
-      globalOptions.defined[name] = nameOrMap[name]
+      const options: Partial<FieryOptions> = nameOrMap[name]
+
+      options.shared = true
+
+      globalOptions.defined[name] = options
     }
   }
 }
 
 export function setGlobalOptions (user?: Partial<FieryOptions>): void
 {
+  if (user)
+  {
+    user.shared = true
+  }
+
   globalOptions.user = user
 }
 
@@ -218,7 +245,7 @@ export const mergeStrategy: FieryMergeStrategies =
     }
   },
   exclude (options: any, defaults: any): any {
-    let union = mergeStrategy.concat(options, defaults)
+    const union = mergeStrategy.concat(options, defaults)
     if (!union && options && defaults) {
       let exclusions: {[k:string]:any} = {}
       let defaultsArray = isArray(defaults)
@@ -227,6 +254,7 @@ export const mergeStrategy: FieryMergeStrategies =
       forEach(options, (value, key) => value ? (exclusions[optionsArray ? value : key] = true) : 0)
       return exclusions
     }
+    return union
   }
 }
 
@@ -234,7 +262,6 @@ export const mergeOptions: FieryMergeStrategies =
 {
   extends:            mergeStrategy.ignore,
   id:                 mergeStrategy.ignore,
-  property:           mergeStrategy.ignore,
   parent:             mergeStrategy.ignore,
   shared:             mergeStrategy.ignore,
   vm:                 mergeStrategy.ignore,
@@ -242,7 +269,6 @@ export const mergeOptions: FieryMergeStrategies =
   query:              mergeStrategy.replace,
   map:                mergeStrategy.replace,
   once:               mergeStrategy.replace,
-  reset:              mergeStrategy.replace,
   type:               mergeStrategy.replace,
   newDocument:        mergeStrategy.replace,
   newCollection:      mergeStrategy.replace,

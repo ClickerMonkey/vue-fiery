@@ -1,3 +1,3 @@
-import VueFiery from './plugin'
+import VueFiery from './vue'
 
 export default VueFiery

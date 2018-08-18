@@ -1,63 +1,71 @@
 
-import { FieryVue, FieryOptions, FieryEntry, FieryData, FierySource, FieryChangesCallback, FieryEquality, FieryFields } from './types'
-import { parseDocument, encodeDocument } from './documents'
-import { getMetadata, forEach, isEqual, isDefined, isFunction, getFields } from './util'
+import { FieryCacheEntry, FieryOptions, FieryEntry, FieryData, FierySource, FieryChangesCallback, FieryEquality, FieryFields } from './types'
+import { parseDocument, encodeData } from './data'
+import { forEach, isEqual, isDefined, isFunction, getFields } from './util'
+import { getCacheForData } from './cache'
 
 
 
-export function update (this: FieryVue, data: FieryData, fields?: FieryFields): Promise<void> | undefined
+export function update (data: FieryData, fields?: FieryFields): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(data)
+  const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (store && path)
+  if (cache && cache.doc)
   {
-    const values: FieryData = encodeDocument(data, options, fields)
+    const options: FieryOptions = cache.firstEntry.options
+    const values: FieryData = encodeData(data, options, fields)
 
-    return store.doc(path).update(values)
+    return cache.doc.ref.update(values)
   }
 }
 
-export function sync (this: FieryVue, data: FieryData, fields?: FieryFields): Promise<void> | undefined
+export function sync (data: FieryData, fields?: FieryFields): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(data)
+  const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (store && path)
+  if (cache && cache.doc)
   {
-    const values = encodeDocument(data, options, fields)
+    const options: FieryOptions = cache.firstEntry.options
+    const values = encodeData(data, options, fields)
 
-    return store.doc(path).set(values)
+    return cache.doc.ref.set(values)
   }
 }
 
-export function remove (this: FieryVue, data: FieryData, excludeSubs: boolean = false): Promise<void> | undefined
+export function remove (data: FieryData, excludeSubs: boolean = false): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(data)
+  const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (store && path)
+  if (cache && cache.doc)
   {
+    const options: FieryOptions = cache.firstEntry.options
+
     if (!excludeSubs && options.sub)
     {
       for (let subProp in options.sub)
       {
         forEach(data[subProp], (sub) =>
         {
-          this.remove(sub as FieryData)
+          remove(sub as FieryData)
         })
       }
     }
 
-    return store.doc(path).delete()
+    return cache.doc.ref.delete()
   }
 }
 
-export function clear (this: FieryVue, data: FieryData, props: FieryFields): Promise<void> | undefined
+export function clear (data: FieryData, props: FieryFields): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(data)
+  const cache: FieryCacheEntry | undefined = getCacheForData(data)
   const propsArray: string[] = getFields(props) as string[]
 
-  if (store && path)
+  if (cache && cache.doc)
   {
-    const doc = store.doc(path)
+    const options: FieryOptions = cache.firstEntry.options
+    const doc = cache.doc
+    const store = doc.ref.firestore
+
     const deleting: any = {}
     let deleteCount: number = 0
 
@@ -67,7 +75,7 @@ export function clear (this: FieryVue, data: FieryData, props: FieryFields): Pro
       {
         forEach(data[prop], (sub) =>
         {
-          this.remove(sub as FieryData)
+          remove(sub as FieryData)
         })
       }
       else if (prop in data)
@@ -84,26 +92,27 @@ export function clear (this: FieryVue, data: FieryData, props: FieryFields): Pro
 
     if (deleteCount > 0)
     {
-      return doc.update(deleting)
+      return doc.ref.update(deleting)
     }
   }
 }
 
-export function getChanges (this: FieryVue, data: FieryData,
+export function getChanges (data: FieryData,
   fieldsOrCallback: string[] | FieryChangesCallback,
   callbackOrEquality?: FieryChangesCallback | FieryEquality,
   equalityOrNothing?: FieryEquality): Promise<void> | undefined
 {
-  const { store, path, options } = getMetadata(data)
-  const fields: FieryFields | undefined = isFunction(fieldsOrCallback) ? undefined : getFields(fieldsOrCallback as FieryFields)
-  const callback: FieryChangesCallback = (fields ? callbackOrEquality : fieldsOrCallback) as FieryChangesCallback
-  const equality: FieryEquality = ((fields ? equalityOrNothing : callbackOrEquality) || isEqual) as FieryEquality
+  const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (store && path)
+  if (cache && cache.doc)
   {
-    const current: FieryData = encodeDocument(data, options, fields)
+    const fields: FieryFields | undefined = isFunction(fieldsOrCallback) ? undefined : getFields(fieldsOrCallback as FieryFields)
+    const callback: FieryChangesCallback = (fields ? callbackOrEquality : fieldsOrCallback) as FieryChangesCallback
+    const equality: FieryEquality = ((fields ? equalityOrNothing : callbackOrEquality) || isEqual) as FieryEquality
+    const options: FieryOptions = cache.firstEntry.options
+    const current: FieryData = encodeData(data, options, fields)
 
-    return store.doc(path).get().then((doc) =>
+    return cache.doc.ref.get().then((doc: any) =>
     {
       const encoded: FieryData = parseDocument(doc, options)
       const remote: FieryData = {}
@@ -128,14 +137,14 @@ export function getChanges (this: FieryVue, data: FieryData,
   }
 }
 
-export function ref (this: FieryVue, data: FieryData, sub?: string): FierySource | undefined
+export function ref (data: FieryData, sub?: string): FierySource | undefined
 {
-  const { store, path } = getMetadata(data)
+  const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (store && path)
+  if (cache && cache.doc)
   {
-    let doc = store.doc(path)
+    let doc = cache.doc
 
-    return sub ? doc.collection(sub) : doc
+    return sub ? doc.ref.collection(sub) : doc.ref
   }
 }

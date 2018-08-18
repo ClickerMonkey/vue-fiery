@@ -1,6 +1,6 @@
 
 
-import { FieryVue, FieryEntry, FieryTarget, FierySource, FieryInstanceFactory, FieryOptions } from '../types'
+import { FieryInstance, FieryEntry, FieryTarget, FierySource, FieryOptions } from '../types'
 import { getEntry } from '../entry'
 
 
@@ -11,20 +11,20 @@ import factoryCollection from './collection'
 
 
 
-export function factory (vm: FieryVue, entry: FieryEntry): FieryTarget
+export function factory (entry: FieryEntry): FieryTarget
 {
   let chosenFactory = (<any>entry.source).where
     ? (entry.options.map ? factoryMap : factoryCollection)
     : factoryDocument
 
-  return chosenFactory(vm, entry)
-}
-
-export function factoryInstance (vm: FieryVue): FieryInstanceFactory
-{
-  return (source: FierySource, options?: string | Partial<FieryOptions>): FieryTarget => {
-    return factory(vm, getEntry(vm, source, options))
-  }
+  return chosenFactory(entry)
 }
 
 export default factory
+
+
+// TODO when a factory is called again - take the existing target and compare it
+// to the first set of values to determine what needs to be cleared from the
+// entry cache. when the entry cache doesn't have an
+
+// if !doc.exists in colllection, clearcache

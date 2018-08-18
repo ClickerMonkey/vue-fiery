@@ -2,8 +2,9 @@
 import * as firebase from 'firebase'
 
 
-import { FieryOptions, FieryEntry, FieryData, FieryVue } from '../types'
-import { refreshDocument } from '../documents'
+import { FierySystem, FieryOptions, FieryEntry, FieryData, FieryCacheEntry, FieryTarget } from '../types'
+import { refreshData } from '../data'
+import { getCacheForReference, removeCacheFromEntry, destroyCache } from '../cache'
 
 
 
@@ -14,51 +15,65 @@ type DocumentListenOptions = firebase.firestore.DocumentListenOptions
 
 
 
-export function factory (vm: FieryVue, entry: FieryEntry): FieryData
+type OnSnapshot = (querySnapshot: DocumentSnapshot) => any
+
+
+
+export function factory (entry: FieryEntry): FieryData
 {
   const source: DocumentReference = entry.source as DocumentReference
   const options: FieryOptions = entry.options
+  const cache: FieryCacheEntry = getCacheForReference(entry, source)
+  const initialTarget: FieryTarget | undefined = entry.target
+
+  const onSnapshot = (doc: DocumentSnapshot) => {
+    handleDocumentUpdate(cache, entry, doc)
+  }
 
   if (options.once)
   {
     entry.promise = source.get(options.onceOptions)
-      .then((doc: DocumentSnapshot) =>
-      {
-        handleDocumentUpdate(vm, entry, doc)
-
-      }).catch(options.onError)
+      .then(onSnapshot)
+      .catch(options.onError)
   }
   else
   {
-    entry.off = source.onSnapshot(options.liveOptions as DocumentListenOptions,
-      (doc: DocumentSnapshot) =>
-      {
-        handleDocumentUpdate(vm, entry, doc)
-
-      }, options.onError)
+    entry.off = source.onSnapshot(
+      options.liveOptions as DocumentListenOptions,
+      onSnapshot,
+      options.onError
+    )
   }
+
+  if (initialTarget && initialTarget !== cache.data)
+  {
+    removeCacheFromEntry(entry, cache)
+  }
+
+  entry.target = cache.data
 
   return entry.target as FieryData
 }
 
-export function handleDocumentUpdate (vm: FieryVue, entry: FieryEntry, doc: DocumentSnapshot): void
+export function handleDocumentUpdate (cache: FieryCacheEntry, entry: FieryEntry, doc: DocumentSnapshot): void
 {
   const options: FieryOptions = entry.options
+  const system: FierySystem = entry.instance.system
 
   if (!doc.exists)
   {
-    options.onMissing()
+    destroyCache(cache)
+
+    if (entry.name)
+    {
+      system.removeNamed(entry.name)
+    }
   }
   else
   {
-    entry.target = refreshDocument(vm, entry, doc, entry.target)
+    refreshData(cache, doc, entry)
 
-    if (options.reset && options.property)
-    {
-      vm[options.property] = entry.target
-    }
-
-    options.onSuccess(entry.target)
+    options.onSuccess(cache.data)
   }
 }
 

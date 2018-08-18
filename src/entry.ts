@@ -1,89 +1,118 @@
 
 
-import { FieryOptions, FieryInstance, FieryTarget, FieryEntry, FierySources, FieryVue, FierySource, FieryData, FieryChangesCallback, FieryEquality, FieryFields } from './types'
-import { isCollectionSource } from './util'
-import { getOptions } from './options'
+import { FierySystem, FieryOptionsInput, FieryEntryMap, FieryOptions, FieryInstance, FieryEntry, FierySources, FierySource, FieryCache, FieryData, FieryChangesCallback, FieryEquality, FieryFields } from './types'
+import { isCollectionSource, forEach } from './util'
+import { getOptions, recycleOptions } from './options'
+import { getStoreKey } from './store'
+import { removeCacheFromEntry } from './cache'
 import * as operations from './operations'
 
 
-export function closeEntry (entry: FieryEntry): void
+export function closeEntry (entry: FieryEntry, removeChildren: boolean = false): void
 {
-  if (entry && entry.off)
+  if (entry && entry.live)
   {
-    entry.off()
+    if (entry.off)
+    {
+      entry.off()
 
-    delete entry.off
+      delete entry.off
+    }
+
+    entry.live = false
+
+    if (removeChildren)
+    {
+      forEach(entry.children, cached =>
+      {
+        removeCacheFromEntry(entry, cached)
+      })
+    }
   }
 }
 
-export function getEntry (vm: FieryVue, source: FierySource, optionsInput?: string | Partial<FieryOptions>, entryKeyInput?: string, useRawOptions: boolean = false)
+export function getEntry (instance: FieryInstance, source: FierySource, optionsInput?: FieryOptionsInput, name?: string, namedSource: boolean = true)
 {
-  const options: FieryOptions = useRawOptions
-    ? optionsInput as FieryOptions
-    : getOptions(optionsInput, vm)
-  const target: FieryTarget = isCollectionSource(source)
-    ? options.newCollection()
-    : options.newDocument()
-  const recordFunctions = getEntryRecordFunctions(vm)
-  const property: string | undefined = options.property
-  const entryKey: string = entryKeyInput || property || ''
-  const fiery: FieryInstance = vm.$fiery
-  const fires: FierySources = vm.$fires
+  // Things that are allowed to change on repetitive entry calls
+  const options: FieryOptions = getOptions(optionsInput, instance)
+  const storeKey: number = getStoreKey(source)
 
-  let existing: FieryEntry | undefined = fiery.entry[ entryKey ]
-  let children = {}
-  let entry: FieryEntry = { source, options, target, children, recordFunctions }
-
-  if (existing)
+  if (name && name in instance.entry)
   {
+    const existing: FieryEntry = instance.entry[ name ]
+
     closeEntry(existing)
 
-    entry.target = existing.target
+    if (options.id !== existing.options.id)
+    {
+      recycleOptions(existing.options)
+    }
+
+    existing.source = source
+    existing.options = options
+    existing.storeKey = storeKey
+    existing.live = true
+
+    return existing
   }
 
-  if (!entryKey || !(entryKey in fiery.entry))
-  {
-    entry.index = fiery.entryList.length
-
-    fiery.entryList.push(entry)
+  const recordFunctions = getEntryRecordFunctions(instance)
+  const children: FieryCache = {}
+  const live: boolean = true
+  const entry: FieryEntry = {
+    name,
+    options,
+    source,
+    instance,
+    storeKey,
+    children,
+    recordFunctions,
+    live
   }
 
-  if (entryKey)
+  if (!name || !(name in instance.entry))
   {
-    fiery.entry[ entryKey ] = entry
+    entry.index = instance.entryList.length
+
+    instance.entryList.push(entry)
   }
 
-  if (property)
+  if (name)
   {
-    fires[ property ] = source
+    instance.entry[ name ] = entry
+  }
+
+  if (name && namedSource)
+  {
+    instance.sources[ name ] = source
   }
 
   return entry
 }
 
-export function getEntryRecordFunctions (vm: FieryVue)
+export function getEntryRecordFunctions (instance: FieryInstance)
 {
   return {
     sync: function(this: FieryData, fields?: FieryFields) {
-      return operations.sync.call(vm, this, fields)
+      return operations.sync.call(instance, this, fields)
     },
     update: function(this: FieryData, fields?: FieryFields) {
-      return operations.update.call(vm, this, fields)
+      return operations.update.call(instance, this, fields)
     },
     remove: function(this: FieryData, excludeSubs: boolean = false) {
-      return operations.remove.call(vm, this, excludeSubs)
+      return operations.remove.call(instance, this, excludeSubs)
     },
     ref: function(this: FieryData, sub?: string) {
-      return operations.ref.call(vm, this, sub)
+      return operations.ref.call(instance, this, sub)
     },
     clear: function(this: FieryData, props: FieryFields) {
-      return operations.clear.call(vm, this, props)
+      return operations.clear.call(instance, this, props)
     },
     getChanges: function(this: FieryData,
       fieldsOrCallback: FieryFields | FieryChangesCallback,
       callbackOrEquality?: FieryChangesCallback | FieryEquality,
       equalityOrNothing?: FieryEquality) {
-      return operations.getChanges.call(vm, this, fieldsOrCallback, callbackOrEquality, equalityOrNothing)
+      return operations.getChanges.call(instance, this, fieldsOrCallback, callbackOrEquality, equalityOrNothing)
     }
   }
 }

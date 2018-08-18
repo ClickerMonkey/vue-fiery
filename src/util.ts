@@ -2,10 +2,10 @@
 import * as firebase from 'firebase'
 
 
-import { PROP_UID, UID_SEPARATOR } from './constants'
-import { FieryOptions, FierySource, FieryVue, FieryData, FieryMetadata, FieryEntry, FieryFields } from './types'
-import { getStoreByKey } from './store'
+
+import { FieryOptions, FierySource, FieryData, FieryMetadata, FieryEntry, FieryFields } from './types'
 import { getOptionsByKey } from './options'
+
 
 
 type Firestore = firebase.firestore.Firestore
@@ -22,9 +22,14 @@ export function isFunction (x?: any): boolean
   return typeof x === 'function'
 }
 
-export function isArray (x?: any): boolean
+export function isArray (x?: any): x is Array<any>
 {
   return x && x instanceof Array
+}
+
+export function isDate (x?: any): x is Date
+{
+  return x && x instanceof Date
 }
 
 export function isDefined (x?: any): boolean
@@ -47,7 +52,9 @@ export function getFields (fields?: FieryFields, otherwise?: string[]): string[]
   return !fields ? otherwise : (typeof fields === 'string' ? [fields] : fields)
 }
 
-export function forEach (iterable: any, callback: (item: any, key?: number | string, iterable?: any) => any): boolean
+// export function forEach<I, V extends I[keyof I], K extends keyof I>(iterable: I, callback: (item: V, key: K, iterable: I) => any): boolean
+// export function forEach<V, K>(iterable: V[], callback: (item: V, key: K, iterable: V[]) => any): boolean
+export function forEach(iterable: any, callback: (item: any, key: any, iterable: any) => any): boolean
 {
   if (isArray(iterable))
   {
@@ -69,16 +76,6 @@ export function forEach (iterable: any, callback: (item: any, key?: number | str
   }
 
   return false
-}
-
-export function getMetadata (data: FieryData): FieryMetadata
-{
-  const uid: string = data[PROP_UID]
-  const [storeKey, optionKey, path] = uid.split(UID_SEPARATOR) as string[]
-  const store: Firestore = getStoreByKey( storeKey )
-  const options: FieryOptions = getOptionsByKey( optionKey )
-
-  return { uid, path, storeKey, store, optionKey, options }
 }
 
 export function createRecord (data: FieryData, entry: FieryEntry): FieryData
@@ -113,6 +110,11 @@ export function isEqual (a: any, b: any): boolean
     return false
   }
 
+  if (typeof a !== typeof b)
+  {
+    return false
+  }
+
   if (isArray(a) && isArray(b))
   {
     if (a.length !== b.length)
@@ -129,6 +131,11 @@ export function isEqual (a: any, b: any): boolean
     }
 
     return true
+  }
+
+  if (isDate(a) && isDate(b))
+  {
+    return a.getTime() === b.getTime()
   }
 
   if (isObject(a) && isObject(b))

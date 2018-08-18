@@ -4,8 +4,10 @@ import * as firebase from 'firebase'
 
 
 import { PROP_UID } from '../constants'
-import { FieryVue, FieryEntry, FieryTarget, FieryData, FieryOptions, FieryMap } from '../types'
-import { refreshDocument, destroyDocuments, destroyDocument } from '../documents'
+import { FierySystem, FieryEntry, FieryTarget, FieryData, FieryOptions, FieryMap, FieryCacheEntry } from '../types'
+import { forEach } from '../util'
+import { refreshData } from '../data'
+import { getCacheForDocument, removeDataFromEntry, removeCacheFromEntry, destroyCache } from '../cache'
 
 
 
@@ -18,71 +20,116 @@ type QueryListenOptions = firebase.firestore.QueryListenOptions
 
 
 
-function factory (vm: FieryVue, entry: FieryEntry): FieryMap
+type OnSnapshot = (querySnapshot: QuerySnapshot) => any
+
+
+
+function factory (entry: FieryEntry): FieryMap
 {
   type CollectionQuery = CollectionReference | Query
   const options: FieryOptions = entry.options
-  const query: CollectionQuery = (options.query ? options.query(entry.source) : entry.source) as CollectionQuery
+  const query: CollectionQuery = (options.query
+    ? options.query(entry.source)
+    : entry.source) as CollectionQuery
 
   if (options.once)
   {
     entry.promise = query.get(options.onceOptions)
-      .then((querySnapshot: QuerySnapshot) =>
-      {
-        const target: FieryMap = entry.target as FieryMap
-
-        let missing: FieryMap = {}
-        for (let id in target) {
-          missing[id] = target[id]
-        }
-
-        querySnapshot.forEach((doc: DocumentSnapshot) =>
-        {
-          const old: FieryData = target[doc.id]
-          const updated: FieryData = refreshDocument(vm, entry, doc, old)
-
-          vm.$set(target, doc.id, updated)
-          delete missing[doc.id]
-
-        }, options.onError)
-
-        destroyDocuments(vm, missing, target)
-
-        options.onSuccess(target)
-
-      }).catch(options.onError)
+      .then(getInitialHandler(entry))
+      .catch(options.onError)
   }
   else
   {
-    entry.off = query.onSnapshot(options.liveOptions as QueryListenOptions,
-      (querySnapshot: QuerySnapshot) =>
-      {
-        const target: FieryMap = entry.target as FieryMap
+    entry.off = query.onSnapshot(
+      options.liveOptions as QueryListenOptions,
+      getLiveHandler(entry),
+      options.onError
+    )
+  }
 
-        (<any>querySnapshot).docChanges().forEach((change: DocumentChange) =>
-        {
-          const doc: DocumentSnapshot = change.doc
-
-          switch (change.type) {
-            case 'modified':
-            case 'added':
-              const old: FieryData = target[doc.id]
-              const updated: FieryData = refreshDocument(vm, entry, doc, old)
-              vm.$set(target, doc.id, updated)
-              break
-            case 'removed':
-              destroyDocument(vm, target[doc.id])
-              vm.$delete(target, doc.id)
-              break
-          }
-        }, options.onError)
-
-        options.onSuccess(target)
-
-      }, options.onError)
+  if (!entry.target)
+  {
+    entry.target = options.newCollection()
   }
 
   return entry.target as FieryMap
+}
+
+function getInitialHandler (entry: FieryEntry): OnSnapshot
+{
+  const options: FieryOptions = entry.options
+  const system: FierySystem = entry.instance.system
+
+  return (querySnapshot: QuerySnapshot) =>
+  {
+    const target: FieryMap = entry.target as FieryMap
+    const missing: FieryMap = { ...target }
+
+    querySnapshot.forEach((doc: DocumentSnapshot) =>
+    {
+      const cache: FieryCacheEntry = getCacheForDocument(entry, doc)
+
+      refreshData(cache, doc, entry)
+
+      system.setProperty(target, doc.id, cache.data)
+
+      delete missing[doc.id]
+
+    }, options.onError)
+
+    forEach(missing, (missed, key) => system.removeProperty(target, key as string))
+    forEach(missing, missed => removeDataFromEntry(entry, missed))
+
+    options.onSuccess(target)
+  }
+}
+
+function getUpdateHandler (entry: FieryEntry): OnSnapshot
+{
+  const options: FieryOptions = entry.options
+  const system: FierySystem = entry.instance.system
+
+  return (querySnapshot: QuerySnapshot) =>
+  {
+    const target: FieryMap = entry.target as FieryMap
+
+    (<any>querySnapshot).docChanges().forEach((change: DocumentChange) =>
+    {
+      const doc: DocumentSnapshot = change.doc
+      const cache: FieryCacheEntry = getCacheForDocument(entry, doc)
+
+      switch (change.type) {
+        case 'modified':
+        case 'added':
+          const data: FieryData = refreshData(cache, doc, entry)
+          system.setProperty(target, doc.id, data)
+          break
+        case 'removed':
+          system.removeProperty(target, doc.id)
+          if (doc.exists) {
+            removeCacheFromEntry(entry, cache)
+          } else {
+            destroyCache(cache)
+          }
+          break
+      }
+    }, options.onError)
+
+    options.onSuccess(target)
+  }
+}
+
+function getLiveHandler (entry: FieryEntry): OnSnapshot
+{
+  const handleInitial: OnSnapshot = getInitialHandler(entry)
+  const handleUpdate: OnSnapshot = getUpdateHandler(entry)
+  let handler: OnSnapshot = handleInitial
+
+  return (querySnapshot: QuerySnapshot) =>
+  {
+    handler(querySnapshot)
+    handler = handleUpdate
+  }
 }
 
 export default factory

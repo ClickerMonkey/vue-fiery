@@ -4,12 +4,11 @@ import * as firebase from 'firebase'
 
 
 import { STORE_SEPARATOR } from './constants'
-import { FieryVue, FieryInstance } from './types'
+import { FierySource } from './types'
 
 
 
 type Firestore = firebase.firestore.Firestore
-type DocumentSnapshot = firebase.firestore.DocumentSnapshot
 
 
 
@@ -23,17 +22,10 @@ export const stores = {
 
 }
 
-export function getStoreByKey (key: string): Firestore
+export function getStoreKey (source: FierySource): number
 {
-  return stores.map[parseInt(key)]
-}
-
-export function getStoreKey (doc: DocumentSnapshot): number
-{
-  const firestore = (<any>doc)._firestore
-  const db = firestore._databaseId
-  const id: string = db.database + STORE_SEPARATOR + db.projectId
-
+  const firestore: Firestore = source.firestore
+  const id: string = firestore.app.name
   let key: number = stores.idToKey[id]
 
   if (!key)

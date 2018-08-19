@@ -86,6 +86,8 @@ export interface FieryOptions
 
   doc?: boolean
 
+  ref?: boolean
+
   once?: boolean
 
   type?: { new (): FieryData }
@@ -99,12 +101,17 @@ export interface FieryOptions
   decoders?:
   {
     [prop: string]: (a: any, encoded: FieryData) => any
-  },
+  }
 
   encoders?:
   {
     [prop: string]: (a: any, data: FieryData) => any
-  },
+  }
+
+  defaults:
+  {
+    [prop: string]: any | (() => any)
+  }
 
   record?: boolean
 
@@ -115,8 +122,21 @@ export interface FieryOptions
     remove?: string
     ref?: string
     clear?: string
+    build?: string
+    create?: string
     getChanges?: string
     [unspecified: string]: any
+  }
+
+  exclude: FieryExclusions | string[]
+
+  include: string[]
+
+  parent?: FieryOptions
+
+  sub?:
+  {
+    [subProp: string]: FieryOptions
   }
 
   propValue: string
@@ -125,10 +145,6 @@ export interface FieryOptions
 
   liveOptions: QueryListenOptions | DocumentListenOptions
 
-  exclude: FieryExclusions | string[]
-
-  include: string[]
-
   onError: (error: any) => any
 
   onSuccess: (target: FieryTarget) => any
@@ -136,13 +152,6 @@ export interface FieryOptions
   onMissing: () => any
 
   onRemove: () => any
-
-  parent?: FieryOptions
-
-  sub?:
-  {
-    [subProp: string]: FieryOptions
-  }
 
 }
 
@@ -169,6 +178,10 @@ export interface FieryInstance
 
   cache: FieryCache
 
+  destroy: () => void
+
+  free: (target: FieryTarget) => void
+
   update: (data: FieryData, fields?: FieryFields) => Promise<void> | undefined
 
   sync: (data: FieryData, fields?: FieryFields) => Promise<void> | undefined
@@ -184,7 +197,13 @@ export interface FieryInstance
 
   ref: (data: FieryData) => FierySource | undefined
 
-  destroy: () => void
+  create: (name: string, initial?: FieryData) => FieryData | undefined
+
+  createSub: (data: FieryData, sub: string, initial?: FieryData) => FieryData | undefined
+
+  build: (name: string, initial?: FieryData) => FieryData | undefined
+
+  buildSub: (data: FieryData, sub: string, initial?: FieryData) => FieryData | undefined
 }
 
 export interface FieryMetadata
@@ -228,6 +247,8 @@ export interface FieryEntry
     remove: (excludeSubs: boolean) => any
     ref: (sub?: string) => any
     clear: (props: FieryFields) => any
+    create: (sub: string, initial?: FieryData) => any
+    build: (sub: string, initial?: FieryData) => any
     getChanges: (fieldsOrCallback: FieryFields | FieryChangesCallback,
       callbackOrEquality?: FieryChangesCallback | FieryEquality,
       equalityOrNothing?: FieryEquality) => any
@@ -252,7 +273,7 @@ export interface FieryCacheEntry
 
   data: FieryData
 
-  doc?: DocumentSnapshot
+  ref: DocumentReference
 
   uses: number
 

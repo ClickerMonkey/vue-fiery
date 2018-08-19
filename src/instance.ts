@@ -28,7 +28,12 @@ export function getInstance (system: FierySystem): FieryInstance
   instance.clear = operations.clear
   instance.getChanges = operations.getChanges
   instance.ref = operations.ref
+  instance.create = operations.create
+  instance.createSub = operations.createSub
+  instance.build = operations.build
+  instance.buildSub = operations.buildSub
   instance.destroy = destroy
+  instance.free = free
 
   return instance as FieryInstance
 }

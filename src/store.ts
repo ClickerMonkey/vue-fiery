@@ -3,7 +3,6 @@ import * as firebase from 'firebase'
 
 
 
-import { STORE_SEPARATOR } from './constants'
 import { FierySource } from './types'
 
 

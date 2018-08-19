@@ -3,17 +3,13 @@ import * as firebase from 'firebase'
 
 
 
-import { ENTRY_SEPARATOR } from './constants'
 import { FierySource, FierySystem, FieryOptions, FieryInstance, FieryEntry, FieryData, FieryMap, FieryFields, FieryCacheEntry } from './types'
-import { isObject, forEach, createRecord, getFields } from './util'
-import { getEntry } from './entry'
-import { factory } from './factory'
-import { getStoreKey } from './store'
-import { removeCacheFromEntry, destroyCache } from './cache'
+import { isObject, getFields } from './util'
 
 
 
 type DocumentSnapshot = firebase.firestore.DocumentSnapshot
+type DocumentReference = firebase.firestore.DocumentReference
 type Firestore = firebase.firestore.Firestore
 
 
@@ -25,58 +21,10 @@ export function refreshData (cache: FieryCacheEntry, doc: DocumentSnapshot, entr
   const encoded: FieryData = parseDocument(doc, options)
   const decoded: FieryData = decodeData(encoded, options)
   const data: FieryData = cache.data
-  const newData: boolean = !cache.doc
 
   copyData(system, data, decoded)
 
-  cache.doc = doc
-
-  if (newData)
-  {
-    createRecord(data, entry)
-    addSubs(cache, entry)
-  }
-
   return data;
-}
-
-export function addSubs (cache: FieryCacheEntry, entry: FieryEntry): void
-{
-  const options: FieryOptions = entry.options
-  const data: FieryData = cache.data
-  const doc: DocumentSnapshot | undefined = cache.doc
-
-  if (options.sub && doc)
-  {
-    for (let subProp in options.sub)
-    {
-      if (!hasLiveSub(cache, subProp))
-      {
-        let subOptions: FieryOptions = options.sub[subProp]
-        let subName: string = cache.uid + ENTRY_SEPARATOR + subProp
-
-        let subSource: FierySource = subOptions.doc
-          ? doc.ref.parent.doc(doc.id + ENTRY_SEPARATOR + subProp)
-          : doc.ref.collection(subProp)
-
-        let subEntry: FieryEntry = getEntry(
-          entry.instance,
-          subSource,
-          subOptions,
-          subName,
-          false // we shouldn't add this to sources
-        )
-
-        data[subProp] = factory(subEntry)
-        cache.sub[subProp] = subEntry
-      }
-    }
-  }
-}
-
-export function hasLiveSub (cache: FieryCacheEntry, sub: string): boolean
-{
-  return sub in cache.sub && cache.sub[sub].live
 }
 
 export function copyData (system: FierySystem, data: FieryData, update: FieryData): FieryData

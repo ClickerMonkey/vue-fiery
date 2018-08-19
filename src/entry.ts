@@ -108,6 +108,12 @@ export function getEntryRecordFunctions (instance: FieryInstance)
     clear: function(this: FieryData, props: FieryFields) {
       return operations.clear.call(instance, this, props)
     },
+    build: function(this: FieryData, sub: string, initial?: FieryData) {
+      return operations.buildSub.call(instance, this, sub, initial)
+    },
+    create: function(this: FieryData, sub: string, initial?: FieryData) {
+      return operations.createSub.call(instance, this, sub, initial)
+    },
     getChanges: function(this: FieryData,
       fieldsOrCallback: FieryFields | FieryChangesCallback,
       callbackOrEquality?: FieryChangesCallback | FieryEquality,

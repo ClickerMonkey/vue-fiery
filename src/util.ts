@@ -69,33 +69,16 @@ export function forEach(iterable: any, callback: (item: any, key: any, iterable:
   {
     for (let prop in iterable)
     {
-      callback(iterable[prop], prop, iterable)
+      if (iterable.hasOwnProperty(prop))
+      {
+        callback(iterable[prop], prop, iterable)
+      }
     }
 
     return true
   }
 
   return false
-}
-
-export function createRecord (data: FieryData, entry: FieryEntry): FieryData
-{
-  const options: FieryOptions = entry.options
-
-  if (options.record)
-  {
-    let recordOptions = options.recordOptions
-    let recordFunctions = entry.recordFunctions
-
-    if (recordOptions.sync) data[recordOptions.sync] = recordFunctions.sync
-    if (recordOptions.update) data[recordOptions.update] = recordFunctions.update
-    if (recordOptions.remove) data[recordOptions.remove] = recordFunctions.remove
-    if (recordOptions.clear) data[recordOptions.clear] = recordFunctions.clear
-    if (recordOptions.getChanges) data[recordOptions.getChanges] = recordFunctions.getChanges
-    if (recordOptions.ref) data[recordOptions.ref] = recordFunctions.ref
-  }
-
-  return data
 }
 
 export function isEqual (a: any, b: any): boolean

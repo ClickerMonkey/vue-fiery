@@ -132,13 +132,17 @@ export function getOptions (options?: FieryOptionsInput, instance?: FieryInstanc
   {
     for (let subProp in options.sub)
     {
-      let subOptionsInput = options.sub[subProp] as Partial<FieryOptions>
+      let subOptionsInput = options.sub[subProp] as FieryOptionsInput
       let subOptions = getOptions(subOptionsInput, instance)
 
       subOptions.parent = options as FieryOptions
 
       options.sub[subProp] = subOptions
-      excludeMap[subProp] = true
+
+      if (!subOptions.ref)
+      {
+        excludeMap[subProp] = true
+      }
     }
   }
 

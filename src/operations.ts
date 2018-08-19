@@ -1,42 +1,53 @@
 
-import { FieryCacheEntry, FieryOptions, FieryEntry, FieryData, FierySource, FieryChangesCallback, FieryEquality, FieryFields } from './types'
+import * as firebase from 'firebase'
+
+
+
+import { FieryInstance, FieryCacheEntry, FieryOptions, FieryEntry, FieryData, FierySource, FieryChangesCallback, FieryEquality, FieryFields } from './types'
 import { parseDocument, encodeData } from './data'
 import { forEach, isEqual, isDefined, isFunction, getFields } from './util'
-import { getCacheForData } from './cache'
+import { getCacheForData, getCacheForReference } from './cache'
 
 
 
-export function update (data: FieryData, fields?: FieryFields): Promise<void> | undefined
+type Firestore = firebase.firestore.Firestore
+type DocumentReference = firebase.firestore.DocumentReference
+type DocumentSnapshot = firebase.firestore.DocumentSnapshot
+type CollectionReference = firebase.firestore.CollectionReference
+
+
+
+export function update (this: FieryInstance, data: FieryData, fields?: FieryFields): Promise<void> | undefined
 {
   const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (cache && cache.doc)
+  if (cache && cache.ref)
   {
     const options: FieryOptions = cache.firstEntry.options
     const values: FieryData = encodeData(data, options, fields)
 
-    return cache.doc.ref.update(values)
+    return cache.ref.update(values)
   }
 }
 
-export function sync (data: FieryData, fields?: FieryFields): Promise<void> | undefined
+export function sync (this: FieryInstance, data: FieryData, fields?: FieryFields): Promise<void> | undefined
 {
   const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (cache && cache.doc)
+  if (cache && cache.ref)
   {
     const options: FieryOptions = cache.firstEntry.options
-    const values = encodeData(data, options, fields)
+    const values: FieryData = encodeData(data, options, fields)
 
-    return cache.doc.ref.set(values)
+    return cache.ref.set(values)
   }
 }
 
-export function remove (data: FieryData, excludeSubs: boolean = false): Promise<void> | undefined
+export function remove (this: FieryInstance, data: FieryData, excludeSubs: boolean = false): Promise<void> | undefined
 {
   const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (cache && cache.doc)
+  if (cache && cache.ref)
   {
     const options: FieryOptions = cache.firstEntry.options
 
@@ -46,25 +57,25 @@ export function remove (data: FieryData, excludeSubs: boolean = false): Promise
       {
         forEach(data[subProp], (sub) =>
         {
-          remove(sub as FieryData)
+          remove.call(this, sub as FieryData)
         })
       }
     }
 
-    return cache.doc.ref.delete()
+    return cache.ref.delete()
   }
 }
 
-export function clear (data: FieryData, props: FieryFields): Promise<void> | undefined
+export function clear (this: FieryInstance, data: FieryData, props: FieryFields): Promise<void> | undefined
 {
   const cache: FieryCacheEntry | undefined = getCacheForData(data)
   const propsArray: string[] = getFields(props) as string[]
 
-  if (cache && cache.doc)
+  if (cache && cache.ref)
   {
     const options: FieryOptions = cache.firstEntry.options
-    const doc = cache.doc
-    const store = doc.ref.firestore
+    const ref: DocumentReference = cache.ref
+    const store: Firestore = ref.firestore
 
     const deleting: any = {}
     let deleteCount: number = 0
@@ -75,7 +86,7 @@ export function clear (data: FieryData, props: FieryFields): Promise<void> | und
       {
         forEach(data[prop], (sub) =>
         {
-          remove(sub as FieryData)
+          remove.call(this, sub as FieryData)
         })
       }
       else if (prop in data)
@@ -92,19 +103,20 @@ export function clear (data: FieryData, props: FieryFields): Promise<void> | und
 
     if (deleteCount > 0)
     {
-      return doc.ref.update(deleting)
+      return ref.update(deleting)
     }
   }
 }
 
-export function getChanges (data: FieryData,
+export function getChanges (this: FieryInstance,
+  data: FieryData,
   fieldsOrCallback: string[] | FieryChangesCallback,
   callbackOrEquality?: FieryChangesCallback | FieryEquality,
   equalityOrNothing?: FieryEquality): Promise<void> | undefined
 {
   const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (cache && cache.doc)
+  if (cache && cache.ref)
   {
     const fields: FieryFields | undefined = isFunction(fieldsOrCallback) ? undefined : getFields(fieldsOrCallback as FieryFields)
     const callback: FieryChangesCallback = (fields ? callbackOrEquality : fieldsOrCallback) as FieryChangesCallback
@@ -112,7 +124,7 @@ export function getChanges (data: FieryData,
     const options: FieryOptions = cache.firstEntry.options
     const current: FieryData = encodeData(data, options, fields)
 
-    return cache.doc.ref.get().then((doc: any) =>
+    return cache.ref.get().then((doc: any) =>
     {
       const encoded: FieryData = parseDocument(doc, options)
       const remote: FieryData = {}
@@ -137,14 +149,89 @@ export function getChanges (data: FieryData,
   }
 }
 
-export function ref (data: FieryData, sub?: string): FierySource | undefined
+export function ref (this: FieryInstance, data: FieryData, sub?: string): FierySource | undefined
 {
   const cache: FieryCacheEntry | undefined = getCacheForData(data)
 
-  if (cache && cache.doc)
+  if (cache && cache.ref)
   {
-    let doc = cache.doc
+    const ref: DocumentReference = cache.ref
 
-    return sub ? doc.ref.collection(sub) : doc.ref
+    return sub ? ref.collection(sub) : ref
   }
+}
+
+export function create (this: FieryInstance, name: string, initial?: FieryData): FieryData | undefined
+{
+  const built: FieryData | undefined = this.build(name, initial)
+
+  if (built)
+  {
+    this.sync(built)
+  }
+
+  return built
+}
+
+export function createSub (this: FieryInstance, data: FieryData, sub: string, initial?: FieryData): FieryData | undefined
+{
+  const built: FieryData | undefined = this.buildSub(data, sub, initial)
+
+  if (built)
+  {
+    this.sync(built)
+  }
+
+  return built
+}
+
+export function build (this: FieryInstance, name: string, initial?: FieryData): FieryData | undefined
+{
+  if (name in this.entry)
+  {
+    const entry: FieryEntry = this.entry[name]
+
+    return buildFromCollection (entry.source as CollectionReference, entry, initial)
+  }
+}
+
+export function buildSub (this: FieryInstance, data: FieryData, sub: string, initial?: FieryData): FieryData | undefined
+{
+  const cache: FieryCacheEntry | undefined = getCacheForData(data)
+
+  if (cache && cache.ref && sub in cache.sub)
+  {
+    const entry: FieryEntry = cache.sub[sub]
+    const ref: DocumentReference = cache.ref
+
+    return buildFromCollection(ref.collection(sub), entry, initial)
+  }
+}
+
+export function buildFromCollection (collection: CollectionReference, entry: FieryEntry, initial?: FieryData): FieryData
+{
+  const options: FieryOptions = entry.options
+  const ref = collection.doc()
+  const cache: FieryCacheEntry = getCacheForReference(entry, ref)
+
+  if (options.defaults)
+  {
+    forEach(options.defaults, (defaultValue, prop) =>
+    {
+      if (initial && !(prop in initial))
+      {
+        cache.data[prop] = isFunction(defaultValue) ? defaultValue() : defaultValue
+      }
+    })
+  }
+
+  if (initial)
+  {
+    forEach(initial, (value, prop) =>
+    {
+      cache.data[prop] = value
+    })
+  }
+
+  return cache.data
 }

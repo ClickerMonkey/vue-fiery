@@ -5,6 +5,8 @@
 <img src="https://travis-ci.org/ClickerMonkey/vue-fiery.svg?branch=master">
 </p>
 
+# This has been moved to https://github.com/fiery-data/fiery-vue
+
 ## vue-fiery
 
 Vue.js binding for Google Firebase Cloud Firestore.
